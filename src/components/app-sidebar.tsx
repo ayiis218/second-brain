@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BrainCircuit, CalendarClock, LayoutDashboard } from "lucide-react";
 
+import { NAV_ITEMS } from "@/components/nav-items";
 import {
   Sidebar,
   SidebarContent,
@@ -16,34 +16,30 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-const NAV = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/timeline", label: "Timeline", icon: CalendarClock },
-];
-
 export function AppSidebar() {
   const pathname = usePathname();
 
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-1.5">
-          <BrainCircuit className="size-5 text-primary" aria-hidden />
-          <span className="font-medium">Second Brain</span>
+        {/* bg-brand-soft, bukan bg-brand-gradient: ujung terang gradasi penuh
+            tidak cukup kontras untuk teks kecil. */}
+        <div className="bg-brand-soft rounded-lg px-3 py-2.5 text-sm font-semibold text-foreground">
+          Second Brain
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigasi</SidebarGroupLabel>
+          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV.map((item) => (
+              {NAV_ITEMS.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
-                    render={<Link href={item.href} />}
                     isActive={pathname === item.href}
+                    render={<Link href={item.href} />}
                   >
-                    <item.icon aria-hidden />
+                    <item.icon />
                     <span>{item.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -1,14 +1,19 @@
+import { BrainCircuit } from "lucide-react";
+
 import { signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BrainCircuit } from "lucide-react";
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-svh items-center justify-center p-6">
-      <Card className="w-full max-w-sm">
+    <div className="flex min-h-svh items-center justify-center p-4">
+      <Card className="w-full max-w-sm overflow-hidden pt-0">
+        {/* Satu-satunya tempat gradasi penuh dipakai sebagai bidang besar:
+            tidak ada teks kecil di atasnya, hanya ikon. */}
+        <div className="bg-brand-gradient flex h-24 items-center justify-center">
+          <BrainCircuit className="size-10 text-white" aria-hidden />
+        </div>
         <CardHeader>
-          <BrainCircuit className="size-8 text-primary" aria-hidden />
           <CardTitle>Second Brain</CardTitle>
           <CardDescription>
             Aplikasi personal. Hanya satu akun yang diizinkan masuk.
@@ -21,7 +26,7 @@ export default function LoginPage() {
               await signIn("google", { redirectTo: "/" });
             }}
           >
-            <Button type="submit" className="w-full">
+            <Button type="submit" size="touch" className="w-full">
               Masuk dengan Google
             </Button>
           </form>

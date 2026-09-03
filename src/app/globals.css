@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-roboto);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -49,72 +49,90 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --background: #F5F9FC;
+  --foreground: #0A2647;
+  --card: #FFFFFF;
+  --card-foreground: #0A2647;
+  --popover: #FFFFFF;
+  --popover-foreground: #0A2647;
+  --primary: #205295;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E8F1FA;
+  --secondary-foreground: #144272;
+  --muted: #EEF3F8;
+  --muted-foreground: #5B7A99;
+  --accent: #2C74B3;
+  --accent-foreground: #FFFFFF;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --border: #D8E4EF;
+  --input: #D8E4EF;
+  --ring: #2C74B3;
+  --chart-1: #2C74B3;
+  --chart-2: #0A2647;
+  --chart-3: #4FB0C6;
+  --chart-4: #F2A93B;
+  --chart-5: #79A9D9;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #FBFDFF;
+  --sidebar-foreground: #0A2647;
+  --sidebar-primary: #205295;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #E8F1FA;
+  --sidebar-accent-foreground: #144272;
+  --sidebar-border: #E1EBF5;
+  --sidebar-ring: #2C74B3;
+  /* Gradasi brand dari palet ColorHunt #3368a0 66a3bf c8dfdb f2efe7.
+     Hanya gradasinya yang dari ColorHunt; token warna lain tetap mengikuti
+     finance-dashboard supaya dua aplikasi terlihat satu keluarga. */
+  --gradient-from: #3368A0;
+  --gradient-via: #66A3BF;
+  --gradient-to: #C8DFDB;
+  /* Separuh terang dari palet yang sama, untuk permukaan BERTEKS.
+     Teks di atasnya memakai --foreground (navy), kontras >= 9:1.
+     Gradasi penuh di atas terlalu gelap-ke-terang untuk teks kecil. */
+  --gradient-soft-from: #C8DFDB;
+  --gradient-soft-to: #F2EFE7;
+  /* Tinggi bottom nav mobile; dipakai untuk memberi ruang konten & FAB. */
+  --bottom-nav-height: 4rem;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #071422;
+  --foreground: #E9F2FA;
+  --card: #0F2438;
+  --card-foreground: #E9F2FA;
+  --popover: #0F2438;
+  --popover-foreground: #E9F2FA;
+  --primary: #4DA8DA;
+  --primary-foreground: #08192B;
+  --secondary: #17324A;
+  --secondary-foreground: #CFE3F5;
+  --muted: #14293D;
+  --muted-foreground: #7FA3C4;
+  --accent: #2C74B3;
+  --accent-foreground: #FFFFFF;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --border: #1E3A52;
+  --input: #1E3A52;
+  --ring: #4DA8DA;
+  --chart-1: #4DA8DA;
+  --chart-2: #79A9D9;
+  --chart-3: #6FD1E8;
+  --chart-4: #F2B84B;
+  --chart-5: #2C74B3;
+  --sidebar: #06111C;
+  --sidebar-foreground: #E9F2FA;
+  --sidebar-primary: #4DA8DA;
+  --sidebar-primary-foreground: #08192B;
+  --sidebar-accent: #17324A;
+  --sidebar-accent-foreground: #CFE3F5;
+  --sidebar-border: #1E3A52;
+  --sidebar-ring: #4DA8DA;
+  --gradient-from: #0F2B45;
+  --gradient-via: #1F4F74;
+  --gradient-to: #3368A0;
+  --gradient-soft-from: #14293D;
+  --gradient-soft-to: #17324A;
 }
 
 @layer base {
@@ -123,8 +141,42 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Aplikasi ini dipakai terutama lewat mobile: hilangkan kilatan abu-abu
+       saat tap, dan cegah tarikan overscroll ikut menggeser halaman. */
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer components {
+  /* Permukaan dekoratif tanpa teks kecil (FAB, aksen). Ikon putih di atas
+     ujung gelapnya memenuhi kontras 3:1 untuk elemen grafis. */
+  .bg-brand-gradient {
+    background-image: linear-gradient(
+      135deg,
+      var(--gradient-from),
+      var(--gradient-via) 55%,
+      var(--gradient-to)
+    );
+  }
+
+  /* Permukaan berteks (brand bar, header). Dipasangkan dengan text-foreground. */
+  .bg-brand-soft {
+    background-image: linear-gradient(
+      135deg,
+      var(--gradient-soft-from),
+      var(--gradient-soft-to)
+    );
+  }
+
+  /* Menjaga elemen tetap di atas home indicator iOS / gesture bar Android. */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bottom-safe {
+    bottom: calc(env(safe-area-inset-bottom) + var(--bottom-nav-height));
   }
 }

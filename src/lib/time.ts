@@ -40,3 +40,14 @@ export function formatDateTime(d: Date) {
     timeZone: APP_TIMEZONE,
   }).format(d);
 }
+
+/** Judul kelompok hari di timeline, mis. "Rabu, 3 September 2026". */
+export function formatDayLabel(d: Date) {
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: APP_TIMEZONE,
+  }).format(d);
+}

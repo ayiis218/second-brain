@@ -53,6 +53,28 @@ npm run db:sql -- "SELECT count(*) FROM \"Entry\""
 npm run db:sql -- --file scripts/verify-phase1.sql
 ```
 
+## UI: mobile-first
+
+Aplikasi ini terutama diakses lewat ponsel, jadi layar kecil adalah kasus utama dan desktop adalah penyesuaian — bukan sebaliknya.
+
+- **Navigasi**: bottom nav di `<md`, sidebar di `>=md`. Bottom bar dipilih ketimbang drawer karena navigasi di sini sering dipakai dan harus terjangkau ibu jari; drawer menuntut dua ketukan ke pojok atas layar.
+- **Quick capture**: di mobile lewat FAB + bottom sheet, di desktop sebagai kartu inline. Menulis adalah aksi paling sering, jadi ia dapat target permanen dalam jangkauan ibu jari.
+- **Target sentuh**: varian `size="touch"` (44px, mengecil jadi 36px di `md`). Ukuran shadcn bawaan (h-8/h-9) terlalu kecil untuk aksi utama di layar sentuh.
+- **Safe area**: `viewportFit: "cover"` plus utilitas `.pb-safe` / `.bottom-safe`, supaya bottom nav dan FAB tidak tertimpa home indicator iOS atau gesture bar Android.
+- **Input**: `text-base` di mobile (turun ke `text-sm` di `md`) — di bawah 16px, iOS otomatis zoom saat field difokus.
+- **Animasi**: Motion, entrance saja (`whileInView` + `once`), dan dilewati sepenuhnya saat `prefers-reduced-motion`.
+
+### Warna
+
+Token warna mengikuti `finance-dashboard` apa adanya supaya dua aplikasi terlihat satu keluarga. Yang berbeda hanya **gradasi brand**, diambil dari palet ColorHunt `#3368a0 #66a3bf #c8dfdb #f2efe7`:
+
+| Utilitas | Isi | Dipakai untuk |
+|---|---|---|
+| `.bg-brand-gradient` | `#3368a0 → #66a3bf → #c8dfdb` | Permukaan dekoratif **tanpa teks kecil** — FAB, header kartu login |
+| `.bg-brand-soft` | `#c8dfdb → #f2efe7` | Permukaan **berteks** — brand bar, header aplikasi |
+
+Pemisahan ini bukan gaya: ujung terang gradasi penuh (`#c8dfdb`) tidak punya kontras cukup untuk teks putih maupun navy berukuran kecil. `.bg-brand-soft` memakai separuh terang palet yang sama dengan teks `--foreground`, kontras >= 9:1.
+
 ## Aturan yang ditegakkan
 
 Dua aturan tidak bisa dijaga compiler, jadi dijaga `npm run check:gates`:
