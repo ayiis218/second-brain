@@ -34,13 +34,24 @@ Port `3001` dipakai supaya bisa jalan berdampingan dengan `finance-dashboard` di
 
 ### Migrasi
 
-`npm run db:migrate` (`prisma migrate deploy`) adalah jalur utama. Kalau gagal dengan TLS reset ke Neon di port 5432 — masalah yang pernah terjadi di finance-dashboard — pakai jalur HTTP:
+**Di jaringan ini, port 5432 ke Neon tidak bisa dijangkau** — `prisma migrate` / `prisma migrate status` / `prisma studio` gagal dengan `P1001`. Masalah yang sama pernah terjadi di finance-dashboard. Jadi jalur yang dipakai adalah driver HTTP Neon (port 443):
 
 ```bash
 npm run db:migrate:http 20260903000000_init_core
 ```
 
-Script itu memecah `migration.sql` dengan splitter yang menghormati dollar-quoting, karena migrasi ini memuat fungsi PL/pgSQL.
+Script itu memecah `migration.sql` dengan splitter yang menghormati dollar-quoting, karena migrasi ini memuat fungsi PL/pgSQL, lalu mencatat hasilnya ke `_prisma_migrations` supaya `prisma migrate deploy` mengenalinya kalau suatu saat dijalankan dari jaringan yang port 5432-nya lancar.
+
+`npm run db:migrate` (`prisma migrate deploy`) tetap jadi jalur utama di lingkungan yang normal.
+
+### SQL ad-hoc
+
+Karena `prisma studio` dan `psql` ikut terhalang, query manual lewat:
+
+```bash
+npm run db:sql -- "SELECT count(*) FROM \"Entry\""
+npm run db:sql -- --file scripts/verify-phase1.sql
+```
 
 ## Aturan yang ditegakkan
 
@@ -65,21 +76,14 @@ npm run check:gates && npm run typecheck && npm run lint
 
 ## Verifikasi Fase 1
 
-Setelah database tersambung, lihat daftar lengkap di `../rencana-fase-1-second-brain.md` §5. Yang paling penting:
+Daftar lengkap ada di `../rencana-fase-1-second-brain.md` §5. Bagian database (c, d, g) sudah otomatis:
 
-```sql
--- (c) trigger updatedAt bekerja walau ditulis lewat SQL mentah
-UPDATE "Entry" SET "title" = 'x' WHERE id = '<id>';
-SELECT "createdAt", "updatedAt" FROM "Entry" WHERE id = '<id>';
-
--- (d) searchVector terisi dan bisa dicari
-SELECT id, title FROM "Entry"
- WHERE "searchVector" @@ plainto_tsquery('simple', '<kata dari body>');
-
--- (g) constraint idempotensi sync menolak sourceId ganda
-INSERT INTO "Entry" (id,type,content,"occurredAt",source,"sourceId")
-VALUES ('t1','note','{"body":"a"}',now(),'FINANCE','X');
-INSERT INTO "Entry" (id,type,content,"occurredAt",source,"sourceId")
-VALUES ('t2','note','{"body":"b"}',now(),'FINANCE','X');  -- harus GAGAL
-DELETE FROM "Entry" WHERE id IN ('t1','t2');
+```bash
+npm run db:sql -- --file scripts/verify-phase1.sql
 ```
+
+Yang diperiksa: trigger mengisi `searchVector` dan menaikkan `updatedAt` walau baris ditulis lewat SQL mentah, FTS menemukan baris lewat `body` maupun `title`, `sourceId` ganda ditolak, dan entry native ber-`sourceId` NULL tetap boleh berkali-kali.
+
+> Script ini memuat satu INSERT yang **memang harus gagal** (uji unique constraint), jadi keluarannya berisi satu baris `ERROR: duplicate key ...` dan exit code non-nol. Itu tanda lulus, bukan gagal.
+
+Sisanya (a: login Google, b: quick capture di browser) dijalankan manual di `http://localhost:3001`.

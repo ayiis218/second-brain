@@ -11,7 +11,8 @@
     "check:gates": "node scripts/check-gates.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "db:migrate:http": "node scripts/apply-migration.mjs",
+    "db:migrate:http": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/apply-migration.mjs",
+    "db:sql": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/sql.mjs",
     "db:studio": "prisma studio"
   },
   "dependencies": {
