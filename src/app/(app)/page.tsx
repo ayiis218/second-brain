@@ -1,4 +1,5 @@
 import { EntryFeed } from "@/components/entry-feed";
+import { FinanceSummaryCard } from "@/components/finance-summary-card";
 import { QuickCapture } from "@/components/quick-capture";
 import { TodaySummary } from "@/components/today-summary";
 import { listEntries } from "@/lib/entries/repository";
@@ -14,6 +15,7 @@ export default async function DashboardPage() {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4">
       <TodaySummary />
+      <FinanceSummaryCard />
       <QuickCapture />
       <h2 className="px-1 text-sm font-medium text-muted-foreground">Entry terakhir</h2>
       <EntryFeed

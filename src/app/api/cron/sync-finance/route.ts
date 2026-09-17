@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 
-import { runFinanceSync } from "@/lib/sync/finance";
+import { runFinanceSnapshotSync } from "@/lib/sync/finance-snapshot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,8 +35,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await runFinanceSync();
-    return Response.json({ ok: true, ...result });
+    const payload = await runFinanceSnapshotSync();
+    return Response.json({ ok: true, capturedAt: payload.capturedAt, net: payload.totals.net });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[cron] sync finance gagal:", message);

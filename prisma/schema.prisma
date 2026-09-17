@@ -265,3 +265,16 @@ model LegacyAttachment {
 
   @@index([itemId])
 }
+
+/// Foto posisi keuangan dari finance-dashboard. Satu baris per sumber.
+///
+/// BUKAN Entry: Entry adalah peristiwa pada satu waktu, snapshot adalah
+/// keadaan terkini yang selalu ditimpa. Memaksakannya jadi Entry akan
+/// mengotori timeline dengan ratusan baris yang tidak berarti kronologis.
+model FinanceSnapshot {
+  source     String    @id
+  payload    Json
+  capturedAt DateTime
+  fetchedAt  DateTime  @default(now())
+  lastError  String?
+}

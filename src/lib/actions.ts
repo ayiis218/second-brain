@@ -27,7 +27,7 @@ import {
 } from "@/lib/entries/repository";
 import { isEntryType, userCreatableTypeSchema } from "@/lib/entries/schemas";
 import { createInvite, revokeInvite } from "@/lib/invites";
-import { runFinanceSync } from "@/lib/sync/finance";
+import { runFinanceSnapshotSync } from "@/lib/sync/finance-snapshot";
 
 const captureSchema = z
   .object({
@@ -223,11 +223,11 @@ export async function revokeInviteAction(id: string) {
 export async function syncFinanceAction() {
   if (!(await isOwner())) throw new Error("Hanya pemilik yang bisa menjalankan sync.");
 
-  const result = await runFinanceSync();
+  const payload = await runFinanceSnapshotSync();
 
-  revalidateEntryViews();
+  revalidatePath("/");
   revalidatePath("/finance");
-  return result;
+  return payload;
 }
 
 // --- Sesi -------------------------------------------------------------------

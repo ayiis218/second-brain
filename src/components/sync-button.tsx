@@ -14,10 +14,13 @@ export function SyncButton() {
   function onSync() {
     startTransition(async () => {
       try {
-        const result = await syncFinanceAction();
-        toast.success(
-          `Sync selesai — ${result.created} baru, ${result.updated} diperbarui, ${result.deleted} dihapus`,
-        );
+        const payload = await syncFinanceAction();
+        const net = new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+          maximumFractionDigits: 0,
+        }).format(Number(payload.totals.net));
+        toast.success(`Posisi diperbarui — ${net}`);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Sync gagal");
       }
