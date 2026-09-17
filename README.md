@@ -5,7 +5,7 @@ Aplikasi personal multi-user tertutup: journal, task, habit, notes, timeline —
 Rencana lengkap ada di `../rencana-aplikasi-second-brain.md`.
 Rencana per fase ada di `../rencana-fase-1-second-brain.md` dan `../rencana-fase-2-second-brain.md`.
 
-Status: **Fase 3 selesai** — multi-user tertutup, edit/hapus, task, journal, search, tagging, export, dan sync read-only dari finance-dashboard.
+Status: **Fase 4 selesai** — multi-user tertutup, edit/hapus, task, journal, habit + streak, search, tagging, export, sync read-only dari finance-dashboard, insight deskriptif, dan PWA.
 
 ## Multi-user
 
@@ -24,6 +24,7 @@ npm run db:verify:isolation   # dua user sungguhan, 9 pemeriksaan
 npm run db:verify:phase2      # search, index task, tag, soft delete
 npm run db:verify:export      # pulang-pergi export -> import
 npm run db:verify:phase3      # isolasi transaksi sync, idempotensi, tautan
+npm run db:verify:phase4      # satu centang habit per hari, isolasi habit
 ```
 
 ## Sync finance (Fase 3)
@@ -45,6 +46,18 @@ Tiga hal yang menjaga kebenarannya:
 - **`amount` tetap string** sepanjang jalur data. Presisi `Decimal` tidak muat di float JS; `Number()` hanya dipakai saat memformat tampilan.
 
 Sync berjalan tanpa sesi, jadi `scopedDb()` tidak bisa dipakai. Jalur sistemnya dipisah ke `src/lib/entries/sync-repository.ts` dengan aturan pengganti: **setiap query di sana wajib menyebut `ownerId`**, dijaga gerbang `jalur sistem tanpa ownerId`.
+
+## Habit, Insight, dan PWA (Fase 4)
+
+**Habit** disimpan sebagai entry `habit` (namanya di `title`), centangnya sebagai entry `habit_log` ber-`dayKey` WIB. Aturan "satu centang per hari" ditegakkan **unique index parsial** di database, bukan hanya kode — dua ketukan beruntun di mobile tidak bisa sama-sama lolos.
+
+`dayKey` disimpan eksplisit alih-alih diturunkan dari `occurredAt` di dalam index, supaya batas hari WIB tetap dihitung di satu tempat (`lib/time.ts`). Streak tidak putus oleh hari ini yang belum dicentang — kalau begitu, streak akan terlihat nol tiap pagi.
+
+**Insight** sengaja hanya statistik deskriptif: hitungan dan perbandingan periode, tanpa satu pun klaim sebab-akibat. Alasannya ada di rencana induk §11.4 — pada data personal harian, korelasi yang muncul sebagian besar noise.
+
+**PWA**: `manifest.ts` + ikon PNG yang di-generate `next/og` saat build (tidak ada aset biner di repo). `share_target` memakai method GET ke `/share`; varian POST butuh service worker, dan itu biaya perawatan yang tidak sepadan untuk menyalin sepotong teks.
+
+Manifest dan ikon **dikecualikan dari proxy auth** — browser mengambilnya untuk memasang PWA kadang tanpa cookie, dan kalau ikut dijaga yang terunduh adalah halaman login.
 
 ## Export & restore
 
@@ -100,7 +113,6 @@ Karena `prisma studio` dan `psql` ikut terhalang, query manual lewat:
 
 ```bash
 npm run db:sql -- "SELECT count(*) FROM \"Entry\""
-npm run db:sql -- --file scripts/verify-phase1.sql
 ```
 
 ## UI: mobile-first
@@ -155,7 +167,6 @@ npm run check:gates && npm run typecheck && npm run lint
 Daftar lengkap ada di `../rencana-fase-1-second-brain.md` §5. Bagian database (c, d, g) sudah otomatis:
 
 ```bash
-npm run db:sql -- --file scripts/verify-phase1.sql
 ```
 
 Yang diperiksa: trigger mengisi `searchVector` dan menaikkan `updatedAt` walau baris ditulis lewat SQL mentah, FTS menemukan baris lewat `body` maupun `title`, `sourceId` ganda ditolak, dan entry native ber-`sourceId` NULL tetap boleh berkali-kali.

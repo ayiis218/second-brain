@@ -21,6 +21,7 @@ export function EntryEditor({
   tags,
   fieldDefaults,
   suggestedTags,
+  backTo = "/",
 }: {
   id: string;
   type: string;
@@ -29,6 +30,7 @@ export function EntryEditor({
   tags: string[];
   fieldDefaults: EntryFieldDefaults;
   suggestedTags: string[];
+  backTo?: string;
 }) {
   const [pending, startTransition] = useTransition();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -47,9 +49,9 @@ export function EntryEditor({
   function onDelete() {
     startTransition(async () => {
       try {
-        // deleteEntry mengarahkan ke "/" setelah berhasil, jadi tidak ada
-        // toast sukses — halamannya sudah berpindah.
-        await deleteEntry(id);
+        // deleteEntry mengarahkan ke backTo setelah berhasil, jadi tidak
+        // ada toast sukses — halamannya sudah berpindah.
+        await deleteEntry(id, backTo);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Gagal menghapus");
       }
@@ -82,7 +84,6 @@ export function EntryEditor({
               <Textarea
                 id="edit-body"
                 name="body"
-                required
                 rows={8}
                 defaultValue={body}
                 className="min-h-40"

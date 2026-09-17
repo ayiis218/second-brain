@@ -1,4 +1,5 @@
 import { EmptyState, EntryCard } from "@/components/entry-list";
+import { TimelineMore } from "@/components/timeline-more";
 import { listEntries, type EntryWithTags } from "@/lib/entries/repository";
 import { dayKey, formatDayLabel } from "@/lib/time";
 
@@ -26,7 +27,7 @@ function groupByDay(entries: EntryWithTags[]) {
 }
 
 export default async function TimelinePage() {
-  const entries = await listEntries({ limit: 200 });
+  const { entries, nextCursor } = await listEntries({ limit: 50 });
   const groups = groupByDay(entries);
 
   return (
@@ -48,6 +49,12 @@ export default async function TimelinePage() {
             </div>
           </section>
         ))
+      )}
+
+      {nextCursor ? (
+        <TimelineMore initialCursor={nextCursor} />
+      ) : (
+        <p className="py-2 text-center text-xs text-muted-foreground">Sudah sampai ujung.</p>
       )}
     </div>
   );

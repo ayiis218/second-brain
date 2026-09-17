@@ -26,13 +26,16 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         {/* Sticky supaya identitas halaman tetap terlihat saat scroll panjang
             di layar kecil. pt-safe menjaga judul lolos dari notch. */}
         <header className="bg-brand-soft sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="hidden md:inline-flex" />
+          {/* Di mobile tombol ini membuka sidebar sebagai sheet — satu-satunya
+              jalan ke menu yang tidak muat di bottom nav (Timeline, Insight,
+              Finance). */}
+          <SidebarTrigger />
           <Separator orientation="vertical" className="hidden h-4 md:block" />
           <span className="text-sm font-semibold text-foreground">Second Brain</span>
 
-          {/* Bottom nav mobile dibatasi lima item dan tidak memuat
-              Pengaturan, jadi ini satu-satunya jalan ke sana di layar
-              kecil — termasuk untuk keluar. */}
+          {/* Pintasan langsung; Pengaturan juga ada di dalam sheet menu,
+              tapi keluar dan kelola undangan cukup sering dibuka untuk
+              layak satu ketukan. */}
           <Button
             size="icon-touch"
             variant="ghost"

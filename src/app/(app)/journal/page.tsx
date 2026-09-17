@@ -1,4 +1,4 @@
-import { EmptyState, EntryCard } from "@/components/entry-list";
+import { EntryFeed } from "@/components/entry-feed";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MOOD_OPTIONS } from "@/lib/entries/form";
 import { listEntries } from "@/lib/entries/repository";
@@ -65,10 +65,13 @@ function MoodStrip({ moodByDay }: { moodByDay: Map<string, number> }) {
 }
 
 export default async function JournalPage() {
-  const entries = await listEntries({ type: "journal", limit: 200 });
+  const { entries, nextCursor } = await listEntries({ type: "journal", limit: 20 });
+  // Strip mood butuh 30 hari penuh, sementara daftarnya berpaginasi —
+  // jadi keduanya memakai sumber berbeda dan itu memang disengaja.
+  const moodSource = await listEntries({ type: "journal", limit: 400 });
 
   const moodByDay = new Map<string, number>();
-  for (const entry of entries) {
+  for (const entry of moodSource.entries) {
     const mood = moodOf(entry.content);
     const key = dayKey(entry.occurredAt);
     if (mood && !moodByDay.has(key)) moodByDay.set(key, mood);
@@ -80,18 +83,17 @@ export default async function JournalPage() {
 
       <MoodStrip moodByDay={moodByDay} />
 
-      {entries.length === 0 ? (
-        <EmptyState>
-          Belum ada journal. Ketuk <span className="font-medium text-foreground">+</span> lalu
-          pilih Journal.
-        </EmptyState>
-      ) : (
-        <div className="space-y-3">
-          {entries.map((entry, i) => (
-            <EntryCard key={entry.id} entry={entry} index={i} />
-          ))}
-        </div>
-      )}
+      <EntryFeed
+        initialEntries={entries}
+        initialCursor={nextCursor}
+        type="journal"
+        empty={
+          <>
+            Belum ada journal. Ketuk <span className="font-medium text-foreground">+</span>{" "}
+            lalu pilih Journal.
+          </>
+        }
+      />
     </div>
   );
 }

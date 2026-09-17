@@ -20,6 +20,28 @@ export function newId() {
   return `imp_${randomUUID().replace(/-/g, "").slice(0, 21)}`;
 }
 
+/**
+ * Field JSONB yang menyimpan id entry lain — referensi tersembunyi yang tidak
+ * dijaga foreign key, jadi tidak ada cascade maupun error kalau salah.
+ *
+ * DAFTAR INI WAJIB DIPERBARUI setiap ada tipe entry baru yang menunjuk entry
+ * lain lewat content. Kalau terlewat, restore akan "berhasil" tanpa error
+ * sambil memutus relasinya diam-diam — persis yang terjadi pada habit_log
+ * ketika Fase 4 menambahkannya dan script ini tidak ikut diperbarui.
+ */
+const CONTENT_ENTRY_REFS = {
+  habit_log: ["habitId"],
+};
+
+function remapContent(entry, idMap) {
+  const content = { ...(entry.content ?? {}) };
+  for (const key of CONTENT_ENTRY_REFS[entry.type] ?? []) {
+    const old = content[key];
+    if (typeof old === "string" && idMap.has(old)) content[key] = idMap.get(old);
+  }
+  return content;
+}
+
 /** Mengembalikan jumlah baris yang ditulis per tabel. */
 export async function importPayload(sql, userId, payload) {
   if (!payload || !Array.isArray(payload.entries)) {
@@ -58,13 +80,18 @@ export async function importPayload(sql, userId, payload) {
   }
 
   // --- entry ---
+  //
+  // Dua lintasan. Lintasan pertama HANYA menetapkan id baru, supaya referensi
+  // ke entry mana pun sudah bisa dipetakan saat menulis — termasuk referensi
+  // ke entry yang belum sempat ditulis.
   const idMap = new Map();
+  for (const entry of payload.entries) idMap.set(entry.id, newId());
+
   let entriesCreated = 0;
   let entryTagsCreated = 0;
 
   for (const entry of payload.entries) {
-    const id = newId();
-    idMap.set(entry.id, id);
+    const id = idMap.get(entry.id);
 
     await sql.query(
       `INSERT INTO "Entry"
@@ -75,7 +102,7 @@ export async function importPayload(sql, userId, payload) {
         userId,
         entry.type,
         entry.title ?? null,
-        JSON.stringify(entry.content ?? {}),
+        JSON.stringify(remapContent(entry, idMap)),
         entry.occurredAt,
         entry.source ?? "NATIVE",
         // sourceId dikosongkan: kunci idempotensi sync milik akun asal, dan

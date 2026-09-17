@@ -16,14 +16,23 @@ export function QuickCaptureForm({
   onDone,
   autoFocus = false,
   suggestedTags = [],
+  defaultTitle = "",
+  defaultBody = "",
 }: {
   onDone?: () => void;
   autoFocus?: boolean;
   suggestedTags?: string[];
+  defaultTitle?: string;
+  defaultBody?: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [type, setType] = useState<string>("note");
   const [pending, startTransition] = useTransition();
+
+  // Untuk task dan habit, nama kegiatannya ADALAH judul; isi cuma catatan
+  // tambahan. Menukar penekanan dua field ini menghilangkan kebiasaan
+  // mengetik ulang judul di kolom "Isi" cuma supaya form mau disimpan.
+  const titleIsPrimary = type === "task" || type === "habit";
 
   function onSubmit(formData: FormData) {
     startTransition(async () => {
@@ -62,20 +71,30 @@ export function QuickCaptureForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="qc-title">Judul (opsional)</Label>
-        <Input id="qc-title" name="title" placeholder="Judul singkat" className="h-11 md:h-8" />
+        <Label htmlFor="qc-title">
+          {titleIsPrimary ? "Judul" : "Judul (opsional)"}
+        </Label>
+        <Input
+          id="qc-title"
+          name="title"
+          defaultValue={defaultTitle}
+          placeholder={titleIsPrimary ? "Mis. Lari pagi" : "Judul singkat"}
+          className="h-11 md:h-8"
+        />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="qc-body">Isi</Label>
+        <Label htmlFor="qc-body">
+          {titleIsPrimary ? "Catatan (opsional)" : "Isi"}
+        </Label>
         <Textarea
           id="qc-body"
           name="body"
-          required
-          rows={4}
+          rows={titleIsPrimary ? 2 : 4}
           autoFocus={autoFocus}
+          defaultValue={defaultBody}
           placeholder="Tulis apa saja…"
-          className="min-h-28"
+          className={titleIsPrimary ? "min-h-16" : "min-h-28"}
         />
       </div>
 

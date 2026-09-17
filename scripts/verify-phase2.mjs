@@ -76,6 +76,27 @@ check(
   `${crossUser.length} baris`,
 );
 
+// --- Search: multi-kata TIDAK boleh longgar --------------------------------
+// Regresi yang pernah lolos: menggabungkan query utama dengan awalan memakai
+// OR membuat semua kata kecuali yang terakhir diabaikan.
+const looseCheck = await sql.query(
+  `SELECT count(*)::int AS n FROM "Entry"
+    WHERE "userId" = $1 AND "searchVector" @@ to_tsquery('simple','zzzz & kambing:*')`,
+  [A],
+);
+check(
+  "kata yang tidak ada membatalkan hasil (bukan diabaikan)",
+  looseCheck[0].n === 0,
+  `${looseCheck[0].n} baris`,
+);
+
+const bothWords = await sql.query(
+  `SELECT count(*)::int AS n FROM "Entry"
+    WHERE "userId" = $1 AND "searchVector" @@ to_tsquery('simple','beternak & kambing:*')`,
+  [A],
+);
+check("dua kata yang sama-sama ada tetap ketemu", bothWords[0].n === 1);
+
 // --- Search: ranking dan headline ------------------------------------------
 const ranked = await sql.query(
   `SELECT id, ts_rank("searchVector", websearch_to_tsquery('simple','kambing')) AS rank,

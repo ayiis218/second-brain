@@ -7,7 +7,10 @@ import { z } from "zod";
  */
 
 export const journalContent = z.object({
-  body: z.string().min(1),
+  // Boleh kosong: aturan "judul atau isi minimal salah satu" ditegakkan di
+  // boundary action, bukan di sini. Untuk task dan habit, judul justru field
+  // yang alami — memaksa isi bikin orang mengarang teks supaya tombol jalan.
+  body: z.string().default(""),
   mood: z.number().int().min(1).max(5).optional(),
 });
 
@@ -19,7 +22,26 @@ export const taskContent = z.object({
 });
 
 export const noteContent = z.object({
-  body: z.string().min(1),
+  body: z.string().default(""),
+});
+
+/** Definisi kebiasaan. Namanya ada di `title` entry, bukan di content. */
+export const habitContent = z.object({
+  body: z.string().default(""),
+});
+
+/**
+ * Satu centang kebiasaan pada satu hari.
+ *
+ * `dayKey` disimpan eksplisit, bukan diturunkan dari `occurredAt` saat query.
+ * Dua alasan: batas hari WIB tetap dihitung di satu tempat (lib/time.ts),
+ * dan kolomnya bisa dipakai unique index parsial untuk mencegah satu
+ * kebiasaan tercentang dua kali di hari yang sama.
+ */
+export const habitLogContent = z.object({
+  body: z.string().default(""),
+  habitId: z.string().min(1),
+  dayKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 /**
@@ -46,6 +68,8 @@ export const entryContentSchemas = {
   journal: journalContent,
   task: taskContent,
   note: noteContent,
+  habit: habitContent,
+  habit_log: habitLogContent,
   transaction: transactionContent,
 } as const;
 
@@ -55,18 +79,23 @@ export type EntryContent<T extends EntryType> = z.infer<(typeof entryContentSche
 export const ENTRY_TYPES = Object.keys(entryContentSchemas) as [EntryType, ...EntryType[]];
 
 /**
- * Tipe yang hanya boleh lahir dari sync, tidak pernah dari form.
- * Tanpa pemisahan ini, siapa pun bisa mengirim `type=transaction` ke server
- * action dan menciptakan transaksi palsu yang tampak seperti hasil sync.
+ * Tipe yang tidak boleh lahir dari form quick capture.
+ *
+ * `transaction` hanya lahir dari sync — tanpa pemisahan ini siapa pun bisa
+ * mengirim `type=transaction` dan menciptakan transaksi palsu yang tampak
+ * seperti hasil sync.
+ *
+ * `habit_log` hanya lahir dari aksi centang, yang menghitung `dayKey`-nya
+ * sendiri; membiarkannya lewat form berarti dayKey bisa dikarang.
  */
-const SYNC_ONLY_TYPES: ReadonlySet<string> = new Set(["transaction"]);
+const SYSTEM_ONLY_TYPES: ReadonlySet<string> = new Set(["transaction", "habit_log"]);
 
 /** Seluruh tipe — termasuk yang hanya lahir dari sync. */
 export const entryTypeSchema = z.enum(ENTRY_TYPES);
 
 /** Tipe yang boleh dibuat/diubah user lewat form. Dipakai di boundary action. */
 export const userCreatableTypeSchema = z.enum(
-  ENTRY_TYPES.filter((t) => !SYNC_ONLY_TYPES.has(t)) as [EntryType, ...EntryType[]],
+  ENTRY_TYPES.filter((t) => !SYSTEM_ONLY_TYPES.has(t)) as [EntryType, ...EntryType[]],
 );
 
 export function isEntryType(v: unknown): v is EntryType {

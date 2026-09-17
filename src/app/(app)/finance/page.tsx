@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { EmptyState, EntryCard } from "@/components/entry-list";
+import { EntryFeed } from "@/components/entry-feed";
 import { SyncButton } from "@/components/sync-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { isOwner } from "@/lib/auth-user";
@@ -35,11 +35,11 @@ export default async function FinancePage() {
   if (!(await isOwner())) notFound();
 
   const [entries, state] = await Promise.all([
-    listEntries({ type: "transaction", limit: 100 }),
+    listEntries({ type: "transaction", limit: 20 }),
     getSyncState(),
   ]);
 
-  const total = entries.reduce((sum, entry) => {
+  const total = entries.entries.reduce((sum, entry) => {
     const amount = Number(field<string>(entry.content, "amount") ?? "0");
     const type = field<string>(entry.content, "txType");
     if (Number.isNaN(amount)) return sum;
@@ -68,7 +68,7 @@ export default async function FinancePage() {
             </div>
             <div className="flex justify-between gap-3">
               <dt>Transaksi tersimpan</dt>
-              <dd className="text-right">{entries.length}</dd>
+              <dd className="text-right">{entries.entries.length}+</dd>
             </div>
             <div className="flex justify-between gap-3">
               <dt>Selisih (masuk − keluar)</dt>
@@ -86,18 +86,17 @@ export default async function FinancePage() {
         </CardContent>
       </Card>
 
-      {entries.length === 0 ? (
-        <EmptyState>
-          Belum ada transaksi tersinkron. Jalankan sync, atau pastikan
-          FINANCE_API_URL dan FINANCE_SYNC_TOKEN sudah diisi.
-        </EmptyState>
-      ) : (
-        <div className="space-y-3">
-          {entries.map((entry, i) => (
-            <EntryCard key={entry.id} entry={entry} index={i} />
-          ))}
-        </div>
-      )}
+      <EntryFeed
+        initialEntries={entries.entries}
+        initialCursor={entries.nextCursor}
+        type="transaction"
+        empty={
+          <>
+            Belum ada transaksi tersinkron. Jalankan sync, atau pastikan
+            FINANCE_API_URL dan FINANCE_SYNC_TOKEN sudah diisi.
+          </>
+        }
+      />
     </div>
   );
 }

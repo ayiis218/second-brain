@@ -43,6 +43,21 @@ await sql.query(
   [SRC],
 );
 await sql.query(`INSERT INTO "EntryTag" ("entryId","tagId") VALUES ('v3-e1','v3-tag')`);
+
+// Habit + centangnya: habitId hidup di dalam JSONB, bukan foreign key, jadi
+// import WAJIB memetakannya ulang. Kalau terlewat, restore "berhasil" tapi
+// seluruh streak putus diam-diam.
+await sql.query(
+  `INSERT INTO "Entry" (id, "userId", type, title, content, "occurredAt")
+   VALUES ('v3-habit', $1, 'habit', 'Lari pagi', '{"body":""}', now())`,
+  [SRC],
+);
+await sql.query(
+  `INSERT INTO "Entry" (id, "userId", type, content, "occurredAt")
+   VALUES ('v3-hlog', $1, 'habit_log',
+           jsonb_build_object('body','','habitId','v3-habit','dayKey','2026-09-16'), now())`,
+  [SRC],
+);
 await sql.query(
   `INSERT INTO "EntryLink" (id, "userId", "fromId", "toId", kind)
    VALUES ('v3-l1', $1, 'v3-e1', 'v3-e2', 'related')`,
@@ -70,7 +85,7 @@ const links = await sql.query(
 
 const payload = { exportedAt: new Date().toISOString(), version: 1, entries, tags, links };
 
-check("export memuat semua entry", payload.entries.length === 3, `${payload.entries.length}`);
+check("export memuat semua entry", payload.entries.length === 5, `${payload.entries.length}`);
 check("export memuat tag dan tautan", payload.tags.length === 1 && payload.links.length === 1);
 
 // --- import ke akun yang benar-benar kosong ---
@@ -98,7 +113,27 @@ check(
 const dstIds = new Set(dstEntries.map((e) => e.id));
 check(
   "id dibuat ulang, tidak menabrak id sumber",
-  !dstIds.has("v3-e1") && result.entriesCreated === 3,
+  !dstIds.has("v3-e1") && result.entriesCreated === 5,
+);
+
+// --- habitId di dalam JSONB ikut dipetakan ke id baru ---
+const [dstHabit] = await sql.query(
+  `SELECT id FROM "Entry" WHERE "userId" = $1 AND type = 'habit'`,
+  [DST],
+);
+const [dstLog] = await sql.query(
+  `SELECT content->>'habitId' AS habit_id FROM "Entry"
+    WHERE "userId" = $1 AND type = 'habit_log'`,
+  [DST],
+);
+check(
+  "habitId di dalam JSONB dipetakan ke habit yang baru",
+  Boolean(dstHabit) && dstLog?.habit_id === dstHabit.id,
+  `log -> ${dstLog?.habit_id}, habit baru ${dstHabit?.id}`,
+);
+check(
+  "habitId tidak lagi menunjuk id lama",
+  dstLog?.habit_id !== "v3-habit",
 );
 
 const dstTagged = await sql.query(
@@ -121,13 +156,13 @@ check(
 
 // --- import kedua kali tidak boleh menabrak ---
 const second = await importPayload(sql, DST, payload);
-check("import berulang tidak gagal karena tabrakan id", second.entriesCreated === 3);
+check("import berulang tidak gagal karena tabrakan id", second.entriesCreated === 5);
 
 const srcAfter = await sql.query(
   `SELECT count(*)::int AS n FROM "Entry" WHERE "userId" = $1`,
   [SRC],
 );
-check("data akun sumber tidak tersentuh oleh import", srcAfter[0].n === 3);
+check("data akun sumber tidak tersentuh oleh import", srcAfter[0].n === 5);
 
 await cleanup();
 console.log(failures === 0 ? "\nExport/import aman." : `\n${failures} pemeriksaan GAGAL.`);

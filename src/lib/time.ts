@@ -61,6 +61,21 @@ export function isoToDateInput(iso: string | null | undefined): string {
   return Number.isNaN(parsed.getTime()) ? "" : dayKey(parsed);
 }
 
+/**
+ * Deretan kunci hari WIB dari `count` hari lalu sampai hari ini, urut naik.
+ * Dipakai heatmap habit dan strip mood supaya keduanya sepakat soal
+ * "30 hari terakhir" — dan supaya perhitungan harinya tetap di satu berkas.
+ */
+export function recentDayKeys(count: number, from: Date = new Date()): string[] {
+  const keys: string[] = [];
+  for (let i = count - 1; i >= 0; i--) {
+    const date = new Date(from);
+    date.setDate(from.getDate() - i);
+    keys.push(dayKey(date));
+  }
+  return keys;
+}
+
 /** Judul kelompok hari di timeline, mis. "Rabu, 3 September 2026". */
 export function formatDayLabel(d: Date) {
   return new Intl.DateTimeFormat("id-ID", {
