@@ -65,6 +65,9 @@ const GATES = [
       // diperiksa gerbang "jalur sistem tanpa ownerId" di bawah.
       "src/lib/entries/sync-repository.ts",
       "src/lib/sync/finance.ts",
+      // Snapshot posisi: satu baris tunggal milik pemilik, bukan data
+      // per-user, jadi tidak ada userId untuk disaring.
+      "src/lib/sync/finance-snapshot.ts",
       // Memverifikasi identitas user justru harus di luar scoping —
       // yang diperiksa adalah keberadaan baris User itu sendiri.
       "src/lib/auth-user.ts",
