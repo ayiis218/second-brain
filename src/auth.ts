@@ -5,6 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 
 import { prisma } from "@/lib/prisma";
 import { INVITE_COOKIE, attachInviteUser, consumeInvite } from "@/lib/invites";
+import { recordSignIn } from "@/lib/security/devices";
 
 /**
  * Email pemilik. Bukan lagi pemblokir login seperti di Fase 1 — sekarang
@@ -19,7 +20,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       authorization: { params: { prompt: "select_account" } },
     }),
   ],
-  session: { strategy: "jwt" },
+  // 7 hari, bukan 30 hari bawaan. Untuk aplikasi yang memuat vault, jendela
+  // paparan sebulan terlalu panjang untuk sesuatu yang biayanya nol
+  // dipersempit — imbalannya cuma login ulang sebulan sekali-dua kali.
+  session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60 },
   callbacks: {
     /**
      * Pendaftaran tertutup: hanya pemilik, user yang sudah ada, dan pemegang
@@ -64,6 +68,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
      */
     async session({ session, token }) {
       if (token.sub) session.user.id = token.sub;
+      // Diteruskan apa adanya; yang membandingkannya dengan
+      // sessionsValidAfter adalah src/lib/auth-user.ts.
+      if (typeof token.iat === "number") session.user.issuedAt = token.iat;
       return session;
     },
   },
@@ -78,6 +85,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (code && user.id) {
         await attachInviteUser(code, user.id);
       }
+    },
+
+    /**
+     * Pencatatan perangkat dilakukan di sini, bukan per request: login
+     * adalah satu-satunya saat perangkat baru benar-benar muncul, dan
+     * memeriksanya tiap request berarti satu query tambahan selamanya
+     * untuk kejadian yang terjadi sebulan sekali.
+     */
+    async signIn({ user }) {
+      if (!user.id || !user.email) return;
+      await recordSignIn({ userId: user.id, email: user.email });
     },
   },
   pages: {

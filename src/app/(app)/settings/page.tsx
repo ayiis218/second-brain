@@ -1,5 +1,6 @@
 import { DeleteAccount } from "@/components/delete-account";
 import { InviteManager, type InviteRow } from "@/components/invite-manager";
+import { SecurityPanel, type DeviceRow } from "@/components/security-panel";
 import { SignOutButton } from "@/components/sign-out-button";
 import { TagManager } from "@/components/tag-manager";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getSessionUser, isOwner, requireUserId } from "@/lib/auth-user";
 import { listTagsWithCount } from "@/lib/entries/repository";
 import { listInvites } from "@/lib/invites";
+import { listKnownDevices } from "@/lib/security/devices";
+import { formatDateTime } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +19,14 @@ export default async function SettingsPage() {
     isOwner(),
     listTagsWithCount(),
   ]);
+
+  const devices: DeviceRow[] = user
+    ? (await listKnownDevices(user.id)).map((d) => ({
+        id: d.id,
+        label: d.label,
+        lastSeenLabel: formatDateTime(d.lastSeenAt),
+      }))
+    : [];
 
   let invites: InviteRow[] = [];
   if (owner) {
@@ -49,6 +60,8 @@ export default async function SettingsPage() {
           <SignOutButton />
         </CardContent>
       </Card>
+
+      <SecurityPanel devices={devices} />
 
       <Card>
         <CardHeader>
