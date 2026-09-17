@@ -2,6 +2,7 @@ import {
   BookOpen,
   CalendarClock,
   LayoutDashboard,
+  Wallet,
   ListChecks,
   Search,
   Settings,
@@ -23,6 +24,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/journal", label: "Journal", icon: BookOpen },
   { href: "/search", label: "Cari", icon: Search },
   { href: "/timeline", label: "Timeline", icon: CalendarClock },
+  { href: "/finance", label: "Finance", icon: Wallet, ownerOnly: true },
   { href: "/settings", label: "Pengaturan", icon: Settings },
 ];
 

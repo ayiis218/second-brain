@@ -15,7 +15,7 @@ const GATES = [
   {
     name: "prisma.entry di luar repository",
     pattern: /\bprisma\.entry\b/,
-    allow: ["src/lib/entries/repository.ts"],
+    allow: ["src/lib/entries/repository.ts", "src/lib/entries/sync-repository.ts"],
     hint: "Pakai fungsi dari src/lib/entries/repository.ts supaya content tervalidasi Zod.",
   },
   {
@@ -38,6 +38,11 @@ const GATES = [
       "src/lib/db.ts",
       "src/lib/entries/repository.ts",
       "src/lib/invites.ts",
+      // Jalur SISTEM (cron), berjalan tanpa sesi. Aturannya diganti
+      // aturan lain: setiap query di sana wajib menyebut ownerId —
+      // diperiksa gerbang "jalur sistem tanpa ownerId" di bawah.
+      "src/lib/entries/sync-repository.ts",
+      "src/lib/sync/finance.ts",
       // Memverifikasi identitas user justru harus di luar scoping —
       // yang diperiksa adalah keberadaan baris User itu sendiri.
       "src/lib/auth-user.ts",
@@ -58,6 +63,17 @@ const GATES = [
 const RAW_QUERY_GATE = {
   name: "$queryRaw tanpa filter userId",
   hint: "Tambahkan filter userId di query raw — extension Prisma tidak menjangkau SQL mentah.",
+};
+
+/**
+ * Jalur SISTEM: berkas yang berjalan tanpa sesi (cron sync), sehingga
+ * scopedDb() tidak bisa dipakai dan extension tidak menyuntik apa pun.
+ * Sebagai gantinya, setiap query di sana wajib menyebut `ownerId`.
+ */
+const SYSTEM_PATHS = ["src/lib/entries/sync-repository.ts"];
+const SYSTEM_GATE = {
+  name: "jalur sistem tanpa ownerId",
+  hint: "Query di jalur sistem tidak di-scope otomatis — sertakan userId: ownerId secara eksplisit.",
 };
 
 // Baris komentar satu baris maupun baris di dalam komentar blok.
@@ -161,6 +177,57 @@ for (const gate of GATES) {
     console.error(`  → ${RAW_QUERY_GATE.hint}`);
   } else {
     console.log(`✓ ${RAW_QUERY_GATE.name}`);
+  }
+}
+
+// Jalur sistem: tiap pemanggilan Prisma harus menyebut ownerId di dekatnya.
+{
+  const offenders = [];
+
+  for (const rel of SYSTEM_PATHS) {
+    let source;
+    try {
+      source = readFileSync(rel, "utf8");
+    } catch {
+      continue; // berkasnya belum ada; bukan pelanggaran
+    }
+
+    const lines = source.split("\n");
+    for (const match of source.matchAll(/\bprisma\.[a-zA-Z]+\.[a-zA-Z]+\(/g)) {
+      const start = match.index ?? 0;
+      const lineNo = source.slice(0, start).split("\n").length;
+      if (isComment(lines[lineNo - 1] ?? "")) continue;
+
+      // Batas argumen dicari lewat kurung berpasangan, bukan jendela tetap:
+      // jendela tetap ikut membaca pemanggilan tetangga, sehingga ownerId
+      // milik query lain membuat query yang bolong ini lolos.
+      const open = start + match[0].length - 1;
+      let depth = 0;
+      let close = open;
+      for (let i = open; i < source.length; i++) {
+        if (source[i] === "(") depth++;
+        else if (source[i] === ")") {
+          depth--;
+          if (depth === 0) {
+            close = i;
+            break;
+          }
+        }
+      }
+
+      if (!/ownerId/.test(source.slice(open, close))) {
+        offenders.push(`${rel}:${lineNo}  ${match[0]}…) tanpa ownerId di argumennya`);
+      }
+    }
+  }
+
+  if (offenders.length > 0) {
+    failed = true;
+    console.error(`\n✗ ${SYSTEM_GATE.name}`);
+    for (const o of offenders) console.error(`    ${o}`);
+    console.error(`  → ${SYSTEM_GATE.hint}`);
+  } else {
+    console.log(`✓ ${SYSTEM_GATE.name}`);
   }
 }
 
