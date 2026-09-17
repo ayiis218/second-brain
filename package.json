@@ -14,7 +14,11 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:http": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/apply-migration.mjs",
     "db:sql": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/sql.mjs",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:verify:isolation": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-isolation.mjs",
+    "db:verify:phase2": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-phase2.mjs",
+    "db:import": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/import.mjs",
+    "db:verify:export": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-export-import.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

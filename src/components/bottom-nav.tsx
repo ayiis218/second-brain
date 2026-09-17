@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { NAV_ITEMS } from "@/components/nav-items";
+import { mobileNavItems } from "@/components/nav-items";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,8 +13,9 @@ import { cn } from "@/lib/utils";
  *
  * Sidebar mengambil alih di >= md.
  */
-export function BottomNav() {
+export function BottomNav({ isOwner }: { isOwner: boolean }) {
   const pathname = usePathname();
+  const items = mobileNavItems(isOwner);
 
   return (
     <nav
@@ -22,7 +23,7 @@ export function BottomNav() {
       className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 backdrop-blur md:hidden"
     >
       <ul className="flex h-16 items-stretch">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = pathname === item.href;
           return (
             <li key={item.href} className="flex-1">

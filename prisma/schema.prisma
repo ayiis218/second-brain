@@ -20,6 +20,13 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+
+  entries    Entry[]
+  tags       Tag[]
+  entryLinks EntryLink[]
+
+  invitesCreated  Invite[] @relation("InviteCreator")
+  invitesRedeemed Invite[] @relation("InviteRedeemer")
 }
 
 model Account {
@@ -69,6 +76,10 @@ enum EntrySource {
 /// lewat src/lib/entries/schemas.ts — jangan pernah tulis langsung.
 model Entry {
   id         String      @id @default(cuid())
+  /// Pemilik baris. Setiap query WAJIB terfilter kolom ini —
+  /// lihat src/lib/entries/repository.ts dan src/lib/prisma.ts.
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   /// 'journal' | 'task' | 'note' | ... — sengaja String, bukan enum:
   /// menambah tipe entry baru tidak boleh butuh migrasi.
   type       String
@@ -92,24 +103,32 @@ model Entry {
   linksFrom EntryLink[] @relation("LinkFrom")
   linksTo   EntryLink[] @relation("LinkTo")
 
-  /// Kunci idempotensi sync. Aman untuk entry native: Postgres
-  /// memperlakukan NULL sebagai saling berbeda.
-  @@unique([source, sourceId])
-  @@index([occurredAt(sort: Desc), id])
-  @@index([type, occurredAt(sort: Desc)])
-  @@index([deletedAt])
+  /// Kunci idempotensi sync, di-scope per user. Aman untuk entry native:
+  /// Postgres memperlakukan NULL sebagai saling berbeda.
+  @@unique([userId, source, sourceId])
+  /// Semua index diawali userId — tanpa itu setiap query memindai
+  /// baris milik seluruh user.
+  @@index([userId, occurredAt(sort: Desc), id])
+  @@index([userId, type, occurredAt(sort: Desc)])
+  @@index([userId, deletedAt])
 }
 
 model Tag {
-  id    String  @id @default(cuid())
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   /// Lowercase ternormalisasi — mencegah 'Kerja'/'kerja' jadi dua tag.
-  name  String  @unique
+  name   String
   /// Tampilan apa adanya sesuai yang diketik user.
-  label String
-  color String?
+  label  String
+  color  String?
 
   createdAt DateTime   @default(now())
   entries   EntryTag[]
+
+  /// Unik PER USER, bukan global. Kalau global, tag 'kerja' milik satu user
+  /// memblokir semua user lain memakai nama yang sama.
+  @@unique([userId, name])
 }
 
 model EntryTag {
@@ -123,7 +142,13 @@ model EntryTag {
 }
 
 model EntryLink {
-  id        String   @id @default(cuid())
+  id     String @id @default(cuid())
+  /// Denormalisasi yang disengaja: bisa diturunkan dari `from`/`to`, tapi
+  /// kolom sendiri membuat scoping seragam untuk semua model dan mencegah
+  /// link antar-user secara struktural.
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   fromId    String
   toId      String
   kind      String   @default("related")
@@ -134,4 +159,29 @@ model EntryLink {
 
   @@unique([fromId, toId, kind])
   @@index([toId])
+  @@index([userId])
+}
+
+/// Pendaftaran hanya lewat undangan yang dibuat pemilik.
+/// Tidak ada pendaftaran terbuka.
+model Invite {
+  id   String  @id @default(cuid())
+  /// Acak, bukan cuid berurutan — kode ini adalah kredensial.
+  code String  @unique
+  /// Opsional: mengunci undangan ke satu alamat email.
+  email String?
+
+  createdById String
+  createdBy   User   @relation("InviteCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  usedById String?
+  usedBy   User?     @relation("InviteRedeemer", fields: [usedById], references: [id], onDelete: SetNull)
+  usedAt   DateTime?
+
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@index([createdById])
 }
