@@ -25,7 +25,20 @@ npm run db:verify:phase2      # search, index task, tag, soft delete
 npm run db:verify:export      # pulang-pergi export -> import
 npm run db:verify:phase3      # isolasi transaksi sync, idempotensi, tautan
 npm run db:verify:phase4      # satu centang habit per hari, isolasi habit
+npm run db:verify:access      # pencabutan sesi, perangkat dikenal
 ```
+
+## Penjagaan akses
+
+Sesi memakai JWT, dan **JWT tidak bisa dicabut** — token berdiri sendiri, server tidak menyimpan catatan apa pun tentangnya. Tanpa penanganan khusus, HP yang hilang dalam keadaan login tetap punya akses sampai tokennya kedaluwarsa.
+
+Penggantinya: kolom `User.sessionsValidAfter`. Token yang diterbitkan sebelum waktu itu ditolak, jadi menaikkannya sama dengan mengeluarkan seluruh perangkat. Pemeriksaannya ada di `validatedSession()` (`src/lib/auth-user.ts`) — satu tempat yang dipakai `getSessionUser()`, `requireUserId()`, dan `isOwner()` sekaligus, supaya tidak ada jalur yang melewatinya.
+
+- Umur sesi **7 hari**, bukan 30 hari bawaan
+- Tombol "Keluar dari semua perangkat" di `/settings`
+- Login dari perangkat baru, pencabutan sesi, dan export data memicu email (lewat Resend; tanpa `RESEND_API_KEY` kejadiannya tetap tercatat di log)
+
+> **Jebakan yang pernah menipu tes di sini:** kolom `TIMESTAMP` tanpa zona waktu dibaca berbeda oleh Prisma (UTC) dan driver `@neondatabase/serverless` (waktu lokal klien) — selisih 7 jam di mesin WIB. Script verifikasi karena itu membandingkan `extract(epoch ...)`, bukan objek `Date`.
 
 ## Sync finance (Fase 3)
 

@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { signOut } from "@/auth";
-import { isOwner, requireUserId } from "@/lib/auth-user";
+import { getSessionUser, isOwner, requireUserId, revokeAllSessions } from "@/lib/auth-user";
+import { notifySecurity } from "@/lib/security/notify";
 import { contentFromFormData } from "@/lib/entries/form";
 import {
   createEntry,
@@ -231,6 +232,24 @@ export async function syncFinanceAction() {
 }
 
 // --- Sesi -------------------------------------------------------------------
+
+/**
+ * Memutus akses SELURUH perangkat, termasuk yang sedang dipakai.
+ *
+ * Inilah jawaban untuk "HP hilang" — bukan menghapus data. Menghapus tidak
+ * menarik kembali apa yang sudah terbaca, sementara mencabut sesi
+ * menghentikan yang belum. Dan ini bisa dibatalkan: tinggal login lagi.
+ */
+export async function revokeAllSessionsAction() {
+  const user = await getSessionUser();
+  await revokeAllSessions();
+
+  if (user?.email) {
+    await notifySecurity(user.email, { kind: "sessions_revoked", at: new Date() });
+  }
+
+  await signOut({ redirectTo: "/login" });
+}
 
 export async function signOutAction() {
   await signOut({ redirectTo: "/login" });

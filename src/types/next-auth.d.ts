@@ -8,6 +8,11 @@ declare module "next-auth" {
        * Tanpa ini tidak ada apa pun yang bisa dipakai memfilter data per user.
        */
       id: string;
+      /**
+       * Waktu terbit token (detik, dari `token.iat`). Dibandingkan dengan
+       * `User.sessionsValidAfter` untuk mencabut sesi perangkat yang hilang.
+       */
+      issuedAt?: number;
     } & DefaultSession["user"];
   }
 }

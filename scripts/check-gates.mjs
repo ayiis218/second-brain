@@ -71,6 +71,10 @@ const GATES = [
       // Memverifikasi identitas user justru harus di luar scoping —
       // yang diperiksa adalah keberadaan baris User itu sendiri.
       "src/lib/auth-user.ts",
+      // Pencatatan perangkat berjalan di dalam event NextAuth, sebelum
+      // ada sesi yang bisa dipakai scopedDb(). userId diterima
+      // eksplisit dari adapter.
+      "src/lib/security/devices.ts",
       "src/auth.ts",
       // Vault Legacy tidak memakai scopedDb() karena aturannya LEBIH
       // ketat, bukan lebih longgar: modul ini khusus pemilik. Aturan

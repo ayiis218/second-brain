@@ -25,7 +25,13 @@ model User {
   tags       Tag[]
   entryLinks EntryLink[]
 
+  /// Token yang diterbitkan SEBELUM waktu ini ditolak. Menaikkannya
+  /// memaksa seluruh perangkat login ulang — inilah cara memutus akses
+  /// HP yang hilang, karena JWT sendiri tidak bisa dicabut.
+  sessionsValidAfter DateTime?
+
   legacyItems     LegacyItem[]
+  knownDevices    KnownDevice[]
   invitesCreated  Invite[] @relation("InviteCreator")
   invitesRedeemed Invite[] @relation("InviteRedeemer")
 }
@@ -277,4 +283,22 @@ model FinanceSnapshot {
   capturedAt DateTime
   fetchedAt  DateTime  @default(now())
   lastError  String?
+}
+
+/// Perangkat yang pernah dipakai login. Dicatat supaya login dari perangkat
+/// BARU bisa diberitahukan — tanpa ini, kebocoran bisa berlangsung sebulan
+/// tanpa pemiliknya sadar.
+model KnownDevice {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Hash dari user-agent. Bukan sidik jari yang kuat, tapi cukup untuk
+  /// membedakan "browser yang sama seperti kemarin" dari "browser baru".
+  fingerprint String
+  label       String
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, fingerprint])
+  @@index([userId, lastSeenAt])
 }

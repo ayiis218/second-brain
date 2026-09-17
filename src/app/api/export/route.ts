@@ -1,4 +1,6 @@
+import { getSessionUser } from "@/lib/auth-user";
 import { exportAll } from "@/lib/entries/repository";
+import { notifySecurity } from "@/lib/security/notify";
 import { formatDateTime } from "@/lib/time";
 
 export const runtime = "nodejs";
@@ -14,6 +16,15 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const format = new URL(request.url).searchParams.get("format") === "md" ? "md" : "json";
   const { entries, tags, links } = await exportAll();
+
+  // Satu permintaan ini memuat SELURUH data. Itu menjadikannya permintaan
+  // paling bernilai bagi penyerang — dan karena kamu jarang melakukannya,
+  // notifikasinya nyaris tidak pernah mengganggu, tapi sekali muncul tanpa
+  // kamu picu, itu tanda paling terang yang bisa didapat.
+  const user = await getSessionUser();
+  if (user?.email) {
+    await notifySecurity(user.email, { kind: "data_exported", format, at: new Date() });
+  }
   const stamp = new Date().toISOString().slice(0, 10);
 
   if (format === "md") {
