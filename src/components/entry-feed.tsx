@@ -20,12 +20,14 @@ export function EntryFeed({
   initialCursor,
   type,
   tagId,
+  nativeOnly,
   empty,
 }: {
   initialEntries: EntryWithTags[];
   initialCursor: string | null;
   type?: string;
   tagId?: string;
+  nativeOnly?: boolean;
   empty: React.ReactNode;
 }) {
   const [entries, setEntries] = useState(initialEntries);
@@ -36,7 +38,7 @@ export function EntryFeed({
     if (!cursor) return;
     startTransition(async () => {
       try {
-        const next = await loadMoreEntriesAction({ cursor, type, tagId });
+        const next = await loadMoreEntriesAction({ cursor, type, tagId, nativeOnly });
         setEntries((prev) => [...prev, ...next.entries]);
         setCursor(next.nextCursor);
       } catch (error) {

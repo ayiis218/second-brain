@@ -3,7 +3,7 @@
 Aplikasi personal multi-user tertutup: journal, task, habit, notes, timeline — dengan data finance ditarik read-only dari `finance-dashboard`.
 
 Rencana lengkap ada di `../rencana-aplikasi-second-brain.md`.
-Rencana per fase ada di `../rencana-fase-1-second-brain.md` dan `../rencana-fase-2-second-brain.md`.
+Arah terkini ada di `../rencana-arah-gudang-informasi.md`; modul Legacy di `../rencana-fase-5-legacy.md`.
 
 Status: **Fase 4 selesai** — multi-user tertutup, edit/hapus, task, journal, habit + streak, search, tagging, export, sync read-only dari finance-dashboard, insight deskriptif, dan PWA.
 
@@ -164,7 +164,7 @@ npm run check:gates && npm run typecheck && npm run lint
 
 ## Verifikasi Fase 1
 
-Daftar lengkap ada di `../rencana-fase-1-second-brain.md` §5. Bagian database (c, d, g) sudah otomatis:
+Bagian database sudah otomatis lewat script verifikasi:
 
 ```bash
 ```

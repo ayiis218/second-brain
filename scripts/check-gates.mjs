@@ -24,6 +24,28 @@ const GATES = [
     allow: ["src/lib/time.ts"],
     hint: "Pakai dayRange()/dayKey() dari src/lib/time.ts agar batas hari tetap WIB.",
   },
+  // --- Vault Legacy (Fase 5A) ---
+  {
+    name: "prisma.legacyItem di luar repository legacy",
+    pattern: /\bprisma\.legacy[A-Za-z]*\b/,
+    allow: ["src/lib/legacy/repository.ts"],
+    hint: "Vault hanya boleh diakses lewat src/lib/legacy/repository.ts, yang memeriksa kepemilikan.",
+  },
+  {
+    name: "master key dibaca di luar legacy/crypto",
+    // Yang dilarang membaca nilainya, bukan menyebut namanya. Pesan bantuan
+    // di UI justru perlu menyebut nama env var-nya supaya bisa ditindaklanjuti.
+    pattern: /process\.env\.LEGACY_MASTER_KEY/,
+    allow: ["src/lib/legacy/crypto.ts"],
+    hint: "Master key hanya boleh disentuh src/lib/legacy/crypto.ts — satu tempat untuk diperiksa.",
+  },
+  {
+    name: "isi legacy bocor ke jalur export biasa",
+    pattern: /legacyItem|LegacyItem/,
+    allow: ["src/lib/legacy/repository.ts", "src/lib/legacy/actions.ts"],
+    only: ["src/app/api/export/route.ts", "src/lib/entries/repository.ts"],
+    hint: "Vault punya jalur export terenkripsi sendiri; jangan ikut di /api/export biasa.",
+  },
   // --- Isolasi data multi-user (Fase 2.0) ---
   {
     name: "model ber-scope diakses tanpa lewat repository",
@@ -47,6 +69,10 @@ const GATES = [
       // yang diperiksa adalah keberadaan baris User itu sendiri.
       "src/lib/auth-user.ts",
       "src/auth.ts",
+      // Vault Legacy tidak memakai scopedDb() karena aturannya LEBIH
+      // ketat, bukan lebih longgar: modul ini khusus pemilik. Aturan
+      // penggantinya diperiksa gerbang "query tanpa penyaring pemilik".
+      "src/lib/legacy/repository.ts",
     ],
     hint: "Client Prisma mentah melewati penyaring userId. Pakai scopedDb() atau fungsi repository.",
   },
@@ -70,10 +96,16 @@ const RAW_QUERY_GATE = {
  * scopedDb() tidak bisa dipakai dan extension tidak menyuntik apa pun.
  * Sebagai gantinya, setiap query di sana wajib menyebut `ownerId`.
  */
-const SYSTEM_PATHS = ["src/lib/entries/sync-repository.ts"];
+const SYSTEM_PATHS = [
+  { path: "src/lib/entries/sync-repository.ts", token: "ownerId" },
+  // Vault Legacy: requireOwner() mengembalikan userId, dan setiap query
+  // wajib menyebutnya. Tanpa aturan ini, satu query baru yang lupa
+  // menyertakannya membuka seluruh vault ke sesi mana pun.
+  { path: "src/lib/legacy/repository.ts", token: "userId" },
+];
 const SYSTEM_GATE = {
-  name: "jalur sistem tanpa ownerId",
-  hint: "Query di jalur sistem tidak di-scope otomatis — sertakan userId: ownerId secara eksplisit.",
+  name: "query tanpa penyaring pemilik",
+  hint: "Query di jalur ini tidak di-scope otomatis — sertakan userId/ownerId secara eksplisit.",
 };
 
 // Baris komentar satu baris maupun baris di dalam komentar blok.
@@ -101,6 +133,9 @@ for (const gate of GATES) {
   for (const file of files) {
     const rel = relative(".", file);
     if (gate.allow.includes(rel)) continue;
+    // `only` membalik logikanya: alih-alih memindai semua berkas kecuali
+    // yang diizinkan, ia hanya memindai daftar yang disebut.
+    if (gate.only && !gate.only.includes(rel)) continue;
 
     const lines = readFileSync(file, "utf8").split("\n");
     lines.forEach((line, i) => {
@@ -184,7 +219,7 @@ for (const gate of GATES) {
 {
   const offenders = [];
 
-  for (const rel of SYSTEM_PATHS) {
+  for (const { path: rel, token } of SYSTEM_PATHS) {
     let source;
     try {
       source = readFileSync(rel, "utf8");
@@ -215,8 +250,8 @@ for (const gate of GATES) {
         }
       }
 
-      if (!/ownerId/.test(source.slice(open, close))) {
-        offenders.push(`${rel}:${lineNo}  ${match[0]}…) tanpa ownerId di argumennya`);
+      if (!new RegExp(token).test(source.slice(open, close))) {
+        offenders.push(`${rel}:${lineNo}  ${match[0]}…) tanpa ${token} di argumennya`);
       }
     }
   }
@@ -233,8 +268,8 @@ for (const gate of GATES) {
 
 if (failed) {
   console.error(
-    "\nGerbang bocor. Lihat rencana-fase-1-second-brain.md §5(e)(f) dan " +
-      "rencana-fase-2-second-brain.md §2.0(d).",
+    "\nGerbang bocor. Aturan-aturan ini dijelaskan di README bagian " +
+      "\"Aturan yang ditegakkan\".",
   );
   process.exit(1);
 }
