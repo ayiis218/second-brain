@@ -57,11 +57,14 @@ export const TYPE_OPTIONS = [
   { value: "note", label: "Catatan" },
   { value: "journal", label: "Journal" },
   { value: "task", label: "Task" },
+  { value: "habit", label: "Habit" },
 ] as const;
 
 export const TYPE_LABEL: Record<string, string> = {
   note: "Catatan",
   journal: "Journal",
   task: "Task",
+  habit: "Habit",
+  habit_log: "Centang habit",
   transaction: "Transaksi",
 };

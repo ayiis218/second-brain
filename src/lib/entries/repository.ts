@@ -171,23 +171,64 @@ export async function updateEntry<T extends EntryType>(input: {
   return result.count;
 }
 
+/** Cursor keyset `"<ISO occurredAt>|<id>"` — pola yang sama dengan sync finance. */
+export function encodeEntryCursor(entry: { occurredAt: Date; id: string }) {
+  return `${entry.occurredAt.toISOString()}|${entry.id}`;
+}
+
+function decodeEntryCursor(cursor: string | undefined) {
+  if (!cursor) return null;
+  const i = cursor.lastIndexOf("|");
+  if (i < 1) return null;
+  const at = new Date(cursor.slice(0, i));
+  const id = cursor.slice(i + 1);
+  return Number.isNaN(at.getTime()) || !id ? null : { at, id };
+}
+
 export async function listEntries(opts?: {
   type?: EntryType;
   limit?: number;
   tagId?: string;
+  cursor?: string;
 }) {
   const db = await scopedDb();
+  const limit = opts?.limit ?? 50;
+  const cursor = decodeEntryCursor(opts?.cursor);
 
-  return db.entry.findMany({
+  // Keyset, bukan offset: offset melewatkan atau menggandakan baris kalau ada
+  // entry baru ditulis di tengah penelusuran — dan di aplikasi ini menulis
+  // entry baru justru hal yang paling sering terjadi.
+  const rows = await db.entry.findMany({
     where: {
       deletedAt: null,
-      ...(opts?.type ? { type: opts.type } : {}),
+      // habit_log tidak punya isi untuk dibaca — menampilkannya di timeline
+      // hanya membanjiri linimasa dengan baris kosong.
+      ...(opts?.type ? { type: opts.type } : { NOT: { type: "habit_log" } }),
       ...(opts?.tagId ? { tags: { some: { tagId: opts.tagId } } } : {}),
+      ...(cursor
+        ? {
+            OR: [
+              { occurredAt: { lt: cursor.at } },
+              { occurredAt: cursor.at, id: { lt: cursor.id } },
+            ],
+          }
+        : {}),
     },
     orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
-    take: opts?.limit ?? 50,
+    // +1 untuk mendeteksi masih ada halaman lagi tanpa query count terpisah.
+    take: limit + 1,
     include: WITH_TAGS,
   });
+
+  const hasMore = rows.length > limit;
+  const entries = hasMore ? rows.slice(0, limit) : rows;
+  const last = entries.at(-1);
+
+  return {
+    entries,
+    hasMore,
+    nextCursor: hasMore && last ? encodeEntryCursor(last) : null,
+  };
 }
 
 export async function getEntry(id: string) {
@@ -202,11 +243,70 @@ export async function getEntry(id: string) {
 export async function softDeleteEntry(id: string) {
   const db = await scopedDb();
 
+  const target = await db.entry.findFirst({ where: { id }, select: { type: true } });
+
   const result = await db.entry.updateMany({
     where: { id },
     data: { deletedAt: new Date() },
   });
 
+  // Centang habit menunjuk habitId lewat JSONB, bukan foreign key, jadi tidak
+  // ada cascade yang membersihkannya. Tanpa langkah ini log-nya menumpuk
+  // selamanya: tak terlihat di mana pun, tapi ikut terbawa setiap export.
+  if (result.count > 0 && target?.type === "habit") {
+    await db.entry.deleteMany({
+      where: { type: "habit_log", content: { path: ["habitId"], equals: id } },
+    });
+  }
+
+  return result.count;
+}
+
+// --- Tempat sampah ----------------------------------------------------------
+
+/**
+ * Semua penghapusan sudah soft delete sejak Fase 1, tapi tanpa halaman ini
+ * keunggulannya cuma teori: datanya masih ada, hanya tidak ada jalan
+ * kembali kecuali lewat SQL.
+ */
+export async function listTrash(limit = 100) {
+  const db = await scopedDb();
+
+  return db.entry.findMany({
+    where: { deletedAt: { not: null } },
+    orderBy: [{ deletedAt: "desc" }],
+    take: limit,
+    include: WITH_TAGS,
+  });
+}
+
+export async function restoreEntry(id: string) {
+  const db = await scopedDb();
+  const result = await db.entry.updateMany({
+    where: { id, deletedAt: { not: null } },
+    data: { deletedAt: null },
+  });
+  return result.count;
+}
+
+export async function purgeEntry(id: string) {
+  const db = await scopedDb();
+  // Hanya baris yang memang sudah di tempat sampah — supaya "hapus permanen"
+  // tidak bisa dipakai melompati langkah soft delete.
+  const result = await db.entry.deleteMany({ where: { id, deletedAt: { not: null } } });
+  return result.count;
+}
+
+/**
+ * Membersihkan isi tempat sampah yang lebih tua dari `days`.
+ *
+ * Tanpa ini, "soft" delete cuma berarti database yang membengkak diam-diam —
+ * entry yang dihapus dua tahun lalu tetap ikut di setiap export.
+ */
+export async function purgeOldTrash(days = 30) {
+  const db = await scopedDb();
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const result = await db.entry.deleteMany({ where: { deletedAt: { lt: cutoff } } });
   return result.count;
 }
 
@@ -313,6 +413,127 @@ export async function setTaskStatus(id: string, status: string) {
   return result.count;
 }
 
+// --- Habit ------------------------------------------------------------------
+
+export type HabitSummary = {
+  id: string;
+  name: string;
+  doneToday: boolean;
+  streak: number;
+  recentDays: { dayKey: string; done: boolean }[];
+};
+
+/**
+ * Streak = jumlah hari berurutan sampai hari ini.
+ *
+ * Hari ini yang belum dicentang TIDAK memutus streak — kalau begitu, streak
+ * akan terlihat nol setiap pagi sebelum kebiasaannya dikerjakan. Hitungannya
+ * dimulai dari hari ini kalau sudah dicentang, kalau belum dari kemarin.
+ */
+function computeStreak(done: ReadonlySet<string>, todayKey: string): number {
+  const cursor = new Date(`${todayKey}T00:00:00Z`);
+  if (!done.has(todayKey)) cursor.setUTCDate(cursor.getUTCDate() - 1);
+
+  let streak = 0;
+  for (;;) {
+    const key = cursor.toISOString().slice(0, 10);
+    if (!done.has(key)) break;
+    streak++;
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+  return streak;
+}
+
+export async function listHabits(opts: {
+  todayKey: string;
+  recentKeys: string[];
+}): Promise<HabitSummary[]> {
+  const db = await scopedDb();
+
+  const [habits, logs] = await Promise.all([
+    db.entry.findMany({
+      where: { type: "habit", deletedAt: null },
+      orderBy: [{ occurredAt: "asc" }],
+    }),
+    db.entry.findMany({
+      where: { type: "habit_log", deletedAt: null },
+      select: { content: true },
+    }),
+  ]);
+
+  const doneByHabit = new Map<string, Set<string>>();
+  for (const log of logs) {
+    const content = log.content as { habitId?: string; dayKey?: string } | null;
+    if (!content?.habitId || !content.dayKey) continue;
+    const set = doneByHabit.get(content.habitId) ?? new Set<string>();
+    set.add(content.dayKey);
+    doneByHabit.set(content.habitId, set);
+  }
+
+  return habits.map((habit) => {
+    const done = doneByHabit.get(habit.id) ?? new Set<string>();
+    return {
+      id: habit.id,
+      name: habit.title || "(tanpa nama)",
+      doneToday: done.has(opts.todayKey),
+      streak: computeStreak(done, opts.todayKey),
+      recentDays: opts.recentKeys.map((dayKey) => ({ dayKey, done: done.has(dayKey) })),
+    };
+  });
+}
+
+/**
+ * Mencentang atau membatalkan centang satu kebiasaan pada satu hari.
+ *
+ * Membatalkan memakai hard delete, bukan soft delete: baris yang di-soft-delete
+ * tetap menempati unique index parsial hanya kalau ikut terhitung — dan karena
+ * index-nya mengecualikan `deletedAt IS NOT NULL`, soft delete akan
+ * meninggalkan riwayat centang yang tidak berarti apa-apa. Centang habit
+ * adalah fakta biner per hari, bukan catatan yang perlu diarsipkan.
+ */
+export async function toggleHabitDay(habitId: string, dayKey: string) {
+  const userId = await requireUserId();
+  const db = await scopedDb();
+
+  const habit = await db.entry.findFirst({
+    where: { id: habitId, type: "habit", deletedAt: null },
+    select: { id: true },
+  });
+  if (!habit) throw new Error("Habit tidak ditemukan.");
+
+  // Filter JSON path, bukan memuat seluruh habit_log lalu menyaring di
+  // memori. Lima kebiasaan selama setahun ≈ 1.800 baris, dan versi lama
+  // menariknya semua setiap kali satu kotak dicentang.
+  const match = await db.entry.findFirst({
+    where: {
+      type: "habit_log",
+      deletedAt: null,
+      AND: [
+        { content: { path: ["habitId"], equals: habitId } },
+        { content: { path: ["dayKey"], equals: dayKey } },
+      ],
+    },
+    select: { id: true },
+  });
+
+  if (match) {
+    await db.entry.deleteMany({ where: { id: match.id } });
+    return { done: false };
+  }
+
+  const content = parseEntryContent("habit_log", { body: "", habitId, dayKey });
+  await db.entry.create({
+    data: {
+      userId,
+      type: "habit_log",
+      title: null,
+      content: content as Prisma.InputJsonValue,
+      occurredAt: new Date(`${dayKey}T12:00:00Z`),
+    },
+  });
+  return { done: true };
+}
+
 // --- Search -----------------------------------------------------------------
 
 export type SearchHit = {
@@ -338,14 +559,25 @@ export async function searchEntries(query: string, opts?: { type?: string; limit
   const trimmed = query.trim();
   if (!trimmed) return [];
 
-  // websearch_to_tsquery memahami frasa berkutip dan operator (-kata).
-  // Kata terakhir ditambah ':*' lewat to_tsquery terpisah supaya pencarian
-  // sambil mengetik menemukan kata yang belum selesai — tanpa itu "kambi"
-  // tidak akan pernah menemukan "kambing".
-  const prefixTerm = trimmed.split(/\s+/).pop() ?? "";
-  // Dihitung di luar query: template literal bersarang di dalam $queryRaw
-  // membuat SQL-nya sulit dibaca sekaligus memutus pemindaian check-gates.
-  const prefixQuery = /^[\p{L}\p{N}]+$/u.test(prefixTerm) ? `${prefixTerm}:*` : null;
+  // Pencarian sambil mengetik butuh kata terakhir diperlakukan sebagai
+  // awalan — tanpa itu "kambi" tidak akan pernah menemukan "kambing".
+  //
+  // JANGAN meng-OR awalan itu dengan query utama. Versi lama melakukannya
+  // dan hasilnya `('zzzz' & 'makan') | 'makan:*'` — cabang kanan cocok
+  // sendirian, sehingga semua kata kecuali yang terakhir diabaikan. Mencari
+  // "zzzz makan" mengembalikan 51 baris padahal seharusnya nol.
+  //
+  // Jadi tsquery-nya dirakit utuh: kata-kata awal di-AND biasa, hanya kata
+  // terakhir yang dapat ':*'.
+  const terms = trimmed.split(/\s+/).filter(Boolean);
+  const plain = terms.length > 0 && terms.every((t) => /^[\p{L}\p{N}]+$/u.test(t));
+  // Query dengan kutip atau operator (-kata, OR) diserahkan sepenuhnya ke
+  // websearch_to_tsquery, dan fitur awalan dilepas. Mencampur keduanya
+  // persis yang melahirkan bug di atas.
+  const prefixQuery = plain
+    ? terms.map((t, i) => (i === terms.length - 1 ? `${t}:*` : t)).join(" & ")
+    : null;
+
   const typeFilter = opts?.type ?? null;
   const limit = opts?.limit ?? 50;
 
@@ -354,8 +586,7 @@ export async function searchEntries(query: string, opts?: { type?: string; limit
       SELECT CASE
                WHEN ${prefixQuery}::text IS NULL
                  THEN websearch_to_tsquery('simple', ${trimmed})
-               ELSE websearch_to_tsquery('simple', ${trimmed})
-                    || to_tsquery('simple', ${prefixQuery}::text)
+               ELSE to_tsquery('simple', ${prefixQuery}::text)
              END AS tsq
     )
     SELECT e."id",
@@ -413,4 +644,4 @@ export async function exportAll() {
   return { entries, tags, links };
 }
 
-export type EntryWithTags = Awaited<ReturnType<typeof listEntries>>[number];
+export type EntryWithTags = Awaited<ReturnType<typeof listEntries>>["entries"][number];

@@ -14,21 +14,33 @@ import {
   deleteOwnAccount,
   deleteTag,
   parseTagList,
+  purgeEntry,
+  purgeOldTrash,
   renameTag,
+  restoreEntry,
   searchEntries,
+  listEntries,
   setTaskStatus,
+  toggleHabitDay,
   softDeleteEntry,
   updateEntry,
 } from "@/lib/entries/repository";
-import { userCreatableTypeSchema } from "@/lib/entries/schemas";
+import { isEntryType, userCreatableTypeSchema } from "@/lib/entries/schemas";
 import { createInvite, revokeInvite } from "@/lib/invites";
 import { runFinanceSync } from "@/lib/sync/finance";
 
-const captureSchema = z.object({
-  type: userCreatableTypeSchema,
-  body: z.string().trim().min(1, "isi tidak boleh kosong"),
-  title: z.string().trim().optional(),
-});
+const captureSchema = z
+  .object({
+    type: userCreatableTypeSchema,
+    body: z.string().trim().default(""),
+    title: z.string().trim().optional(),
+  })
+  // Yang wajib adalah "ada isinya", bukan "kolom Isi terisi". Untuk task dan
+  // habit, judul sudah cukup — "Lari pagi" tidak butuh penjelasan tambahan.
+  .refine((v) => Boolean(v.title) || Boolean(v.body), {
+    message: "judul atau isi harus diisi",
+    path: ["body"],
+  });
 
 function readEntryForm(formData: FormData) {
   const parsed = captureSchema.parse({
@@ -76,15 +88,67 @@ export async function updateEntryAction(id: string, formData: FormData) {
   revalidatePath(`/entry/${id}`);
 }
 
-export async function deleteEntry(id: string) {
+/**
+ * `backTo` dipakai supaya menghapus dari halaman Habit atau Task tidak
+ * melempar orang ke beranda — tiap kali itu terjadi, aplikasinya terasa
+ * kehilangan tempat.
+ */
+export async function deleteEntry(id: string, backTo = "/") {
   await softDeleteEntry(id);
   revalidateEntryViews();
-  redirect("/");
+  redirect(backTo);
 }
 
 export async function toggleTaskDone(id: string, done: boolean) {
   await setTaskStatus(id, done ? "done" : "todo");
   revalidateEntryViews();
+}
+
+// --- Tempat sampah ----------------------------------------------------------
+
+export async function restoreEntryAction(id: string) {
+  const count = await restoreEntry(id);
+  if (count === 0) throw new Error("Entry tidak ada di tempat sampah.");
+  revalidateEntryViews();
+  revalidatePath("/trash");
+}
+
+export async function purgeEntryAction(id: string) {
+  await purgeEntry(id);
+  revalidatePath("/trash");
+}
+
+export async function emptyTrashAction() {
+  // 0 hari = kosongkan semuanya sekarang, bukan hanya yang sudah lewat 30 hari.
+  const count = await purgeOldTrash(0);
+  revalidatePath("/trash");
+  return count;
+}
+
+// --- Paginasi ----------------------------------------------------------------
+
+export async function loadMoreEntriesAction(params: {
+  cursor: string;
+  type?: string;
+  tagId?: string;
+}) {
+  // listEntries sudah ber-scope user lewat sesi, jadi cursor dari klien tidak
+  // bisa dipakai mengintip data orang lain — paling jauh ia hanya menggeser
+  // posisi di dalam daftar miliknya sendiri.
+  return listEntries({
+    cursor: params.cursor,
+    type: isEntryType(params.type) ? params.type : undefined,
+    tagId: params.tagId,
+  });
+}
+
+// --- Habit ------------------------------------------------------------------
+
+export async function toggleHabitAction(habitId: string, dayKey: string) {
+  const result = await toggleHabitDay(habitId, dayKey);
+  revalidatePath("/habit");
+  revalidatePath("/insight");
+  return result;
 }
 
 // --- Tautan antar-entry -----------------------------------------------------

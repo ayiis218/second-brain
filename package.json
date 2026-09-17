@@ -19,7 +19,8 @@
     "db:verify:phase2": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-phase2.mjs",
     "db:import": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/import.mjs",
     "db:verify:export": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-export-import.mjs",
-    "db:verify:phase3": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-phase3.mjs"
+    "db:verify:phase3": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-phase3.mjs",
+    "db:verify:phase4": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-phase4.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
@@ -28,7 +29,6 @@
     "@neondatabase/serverless": "^1.1.0",
     "@prisma/adapter-neon": "^7.10.0",
     "@prisma/client": "^7.10.0",
-    "@tanstack/react-query": "^5.102.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",

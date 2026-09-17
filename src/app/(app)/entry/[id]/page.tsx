@@ -59,6 +59,18 @@ export default async function EntryDetailPage({ params }: PageProps<"/entry/[id]
 
   const allTags = await listTags();
 
+  // Balik ke halaman modul asalnya. Menghapus habit lalu mendarat di
+  // beranda membuat orang harus menavigasi ulang cuma untuk menghapus
+  // yang berikutnya.
+  const backTo =
+    entry.type === "habit"
+      ? "/habit"
+      : entry.type === "task"
+        ? "/task"
+        : entry.type === "journal"
+          ? "/journal"
+          : "/";
+
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4">
       <p className="px-1 text-xs text-muted-foreground">
@@ -71,6 +83,7 @@ export default async function EntryDetailPage({ params }: PageProps<"/entry/[id]
         body={body}
         tags={tags}
         suggestedTags={allTags.map((tag) => tag.label)}
+        backTo={backTo}
         fieldDefaults={{
           mood: contentField<number>(entry.content, "mood"),
           status: contentField<string>(entry.content, "status"),
