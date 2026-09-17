@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 
 import { EntryEditor } from "@/components/entries/entry-editor";
+import { EntryLinks } from "@/components/entries/entry-links";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TYPE_LABEL } from "@/lib/entries/form";
-import { getEntry, listTags } from "@/lib/entries/repository";
+import { getEntry, listLinks, listTags } from "@/lib/entries/repository";
 import { formatDateTime, isoToDateInput } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,8 @@ export default async function EntryDetailPage({ params }: PageProps<"/entry/[id]
   const body = contentField<string>(entry.content, "body") ?? "";
   const tags = entry.tags.map(({ tag }) => tag.label);
 
+  const links = await listLinks(entry.id);
+
   // Entry hasil sync bersumber dari finance-dashboard dan read-only di sini
   // (rencana induk §6.3). Perubahan dilakukan di aplikasi asalnya.
   if (entry.source !== "NATIVE") {
@@ -46,6 +49,10 @@ export default async function EntryDetailPage({ params }: PageProps<"/entry/[id]
             <p className="whitespace-pre-wrap text-sm text-muted-foreground">{body}</p>
           </CardContent>
         </Card>
+
+        {/* Read-only untuk isinya, tapi tetap bisa ditautkan — menghubungkan
+            journal dengan transaksi yang memicunya adalah inti Fase 3. */}
+        <EntryLinks entryId={entry.id} links={links} />
       </div>
     );
   }
@@ -71,6 +78,7 @@ export default async function EntryDetailPage({ params }: PageProps<"/entry/[id]
           dueAt: isoToDateInput(contentField<string>(entry.content, "dueAt")),
         }}
       />
+      <EntryLinks entryId={entry.id} links={links} />
     </div>
   );
 }

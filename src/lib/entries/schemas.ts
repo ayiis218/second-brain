@@ -22,10 +22,31 @@ export const noteContent = z.object({
   body: z.string().min(1),
 });
 
+/**
+ * Transaksi hasil sync dari finance-dashboard (Fase 3).
+ *
+ * `amount` bertipe string, bukan number: nilainya `Decimal` di sumbernya dan
+ * presisi penuhnya tidak muat di float JS. Jangan pernah mengubahnya jadi
+ * number di jalur data — hanya saat memformat untuk tampilan.
+ *
+ * Tipe ini TIDAK muncul di pemilih quick capture: entry-nya hanya lahir dari
+ * sync, dan read-only di aplikasi ini.
+ */
+export const transactionContent = z.object({
+  body: z.string(),
+  txType: z.enum(["INCOME", "EXPENSE", "TRANSFER"]),
+  category: z.string(),
+  amount: z.string(),
+  accountName: z.string(),
+  toAccountName: z.string().nullable().default(null),
+  affectsBalance: z.boolean().default(true),
+});
+
 export const entryContentSchemas = {
   journal: journalContent,
   task: taskContent,
   note: noteContent,
+  transaction: transactionContent,
 } as const;
 
 export type EntryType = keyof typeof entryContentSchemas;
@@ -33,8 +54,20 @@ export type EntryContent<T extends EntryType> = z.infer<(typeof entryContentSche
 
 export const ENTRY_TYPES = Object.keys(entryContentSchemas) as [EntryType, ...EntryType[]];
 
-/** Skema Zod untuk `type` itu sendiri — dipakai di boundary form/API. */
+/**
+ * Tipe yang hanya boleh lahir dari sync, tidak pernah dari form.
+ * Tanpa pemisahan ini, siapa pun bisa mengirim `type=transaction` ke server
+ * action dan menciptakan transaksi palsu yang tampak seperti hasil sync.
+ */
+const SYNC_ONLY_TYPES: ReadonlySet<string> = new Set(["transaction"]);
+
+/** Seluruh tipe — termasuk yang hanya lahir dari sync. */
 export const entryTypeSchema = z.enum(ENTRY_TYPES);
+
+/** Tipe yang boleh dibuat/diubah user lewat form. Dipakai di boundary action. */
+export const userCreatableTypeSchema = z.enum(
+  ENTRY_TYPES.filter((t) => !SYNC_ONLY_TYPES.has(t)) as [EntryType, ...EntryType[]],
+);
 
 export function isEntryType(v: unknown): v is EntryType {
   return typeof v === "string" && v in entryContentSchemas;

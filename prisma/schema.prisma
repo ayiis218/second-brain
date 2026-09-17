@@ -185,3 +185,17 @@ model Invite {
   @@index([expiresAt])
   @@index([createdById])
 }
+
+/// Posisi sinkronisasi dari sistem luar. Satu baris per sumber.
+///
+/// Sengaja TIDAK ber-userId: finance-dashboard sendiri single-user, jadi
+/// seluruh transaksi hasil sync selalu milik pemilik ruang ini
+/// (rencana-aplikasi-second-brain.md §6.3).
+model SyncState {
+  source    String    @id
+  txCursor  String?
+  delCursor String?
+  lastRunAt DateTime?
+  lastError String?
+  updatedAt DateTime  @default(now())
+}

@@ -16,6 +16,22 @@ function bodyOf(content: unknown): string {
   return "";
 }
 
+function amountOf(content: unknown): string | null {
+  if (content && typeof content === "object" && "amount" in content) {
+    const raw = (content as { amount: unknown }).amount;
+    if (typeof raw !== "string") return null;
+    const value = Number(raw);
+    if (Number.isNaN(value)) return raw;
+    const sign = (content as { txType?: string }).txType === "INCOME" ? "+" : "−";
+    return `${sign}${new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0,
+    }).format(value)}`;
+  }
+  return null;
+}
+
 function moodOf(content: unknown): string | null {
   if (content && typeof content === "object" && "mood" in content) {
     const mood = (content as { mood: unknown }).mood;
@@ -27,6 +43,7 @@ function moodOf(content: unknown): string | null {
 
 export function EntryCard({ entry, index = 0 }: { entry: EntryWithTags; index?: number }) {
   const mood = moodOf(entry.content);
+  const amount = amountOf(entry.content);
 
   return (
     <FadeIn index={index}>
@@ -38,6 +55,9 @@ export function EntryCard({ entry, index = 0 }: { entry: EntryWithTags; index?: 
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary">{TYPE_LABEL[entry.type] ?? entry.type}</Badge>
               {mood ? <span aria-label="Mood">{mood}</span> : null}
+              {amount ? (
+                <span className="font-medium tabular-nums">{amount}</span>
+              ) : null}
               <span className="ml-auto text-xs text-muted-foreground">
                 {formatDateTime(entry.occurredAt)}
               </span>

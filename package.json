@@ -18,7 +18,8 @@
     "db:verify:isolation": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-isolation.mjs",
     "db:verify:phase2": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-phase2.mjs",
     "db:import": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/import.mjs",
-    "db:verify:export": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-export-import.mjs"
+    "db:verify:export": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-export-import.mjs",
+    "db:verify:phase3": "node --env-file-if-exists=.env.local --env-file-if-exists=.env scripts/verify-phase3.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

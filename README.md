@@ -1,11 +1,11 @@
 # Second Brain
 
-Aplikasi personal single-user: journal, task, habit, notes, timeline — dengan data finance ditarik read-only dari `finance-dashboard` (Fase 3).
+Aplikasi personal multi-user tertutup: journal, task, habit, notes, timeline — dengan data finance ditarik read-only dari `finance-dashboard`.
 
 Rencana lengkap ada di `../rencana-aplikasi-second-brain.md`.
-Rencana fase ini ada di `../rencana-fase-1-second-brain.md`.
+Rencana per fase ada di `../rencana-fase-1-second-brain.md` dan `../rencana-fase-2-second-brain.md`.
 
-Status: **Fase 2 selesai** — multi-user tertutup, edit/hapus, task, journal, search, tagging, export.
+Status: **Fase 3 selesai** — multi-user tertutup, edit/hapus, task, journal, search, tagging, export, dan sync read-only dari finance-dashboard.
 
 ## Multi-user
 
@@ -23,7 +23,28 @@ Satu tempat yang tidak tertutup ketiganya: query `$queryRaw` pada Search. Filter
 npm run db:verify:isolation   # dua user sungguhan, 9 pemeriksaan
 npm run db:verify:phase2      # search, index task, tag, soft delete
 npm run db:verify:export      # pulang-pergi export -> import
+npm run db:verify:phase3      # isolasi transaksi sync, idempotensi, tautan
 ```
+
+## Sync finance (Fase 3)
+
+Menarik transaksi read-only dari `finance-dashboard`. Khusus pemilik — halaman `/finance` menolak sendiri dengan 404 untuk user lain, bukan hanya menyembunyikan menunya.
+
+```bash
+# jalankan manual
+curl -H "Authorization: Bearer $CRON_SECRET" localhost:3001/api/cron/sync-finance
+# atau tombol "Sync sekarang" di /finance
+```
+
+Cron dijadwalkan harian di `vercel.json` (plan Hobby membatasi 1x/hari).
+
+Tiga hal yang menjaga kebenarannya:
+
+- **Cursor disimpan hanya setelah seluruh loop sukses.** Job yang gagal di tengah mengulang dari posisi lama — aman karena tulisannya idempoten lewat kunci `(userId, source, sourceId)`.
+- **Dua cursor terpisah** untuk transaksi dan penghapusan. Satu cursor gabungan membuat penghapusan dilaporkan berulang tanpa henti saat tidak ada transaksi baru.
+- **`amount` tetap string** sepanjang jalur data. Presisi `Decimal` tidak muat di float JS; `Number()` hanya dipakai saat memformat tampilan.
+
+Sync berjalan tanpa sesi, jadi `scopedDb()` tidak bisa dipakai. Jalur sistemnya dipisah ke `src/lib/entries/sync-repository.ts` dengan aturan pengganti: **setiap query di sana wajib menyebut `ownerId`**, dijaga gerbang `jalur sistem tanpa ownerId`.
 
 ## Export & restore
 
@@ -57,7 +78,9 @@ Port `3001` dipakai supaya bisa jalan berdampingan dengan `finance-dashboard` di
 | `DATABASE_URL` | Neon Postgres. **Harus database berbeda** dari finance-dashboard. |
 | `AUTH_SECRET` | `npx auth secret` |
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Boleh pakai ulang OAuth client finance-dashboard; cukup tambahkan redirect URI `http://localhost:3001/api/auth/callback/google`. |
-| `ALLOWED_EMAIL` | Satu-satunya email yang boleh login. |
+| `OWNER_EMAIL` | Penanda pemilik: hanya dia yang melihat modul Finance dan bisa membuat undangan. Bukan pemblokir login. |
+| `FINANCE_API_URL` / `FINANCE_SYNC_TOKEN` | Endpoint export finance-dashboard. Tokennya harus sama dengan `SYNC_TOKEN` di sana. |
+| `CRON_SECRET` | Melindungi `/api/cron/*`, yang dikecualikan dari proxy auth karena dipanggil mesin. |
 
 ### Migrasi
 
@@ -104,13 +127,14 @@ Pemisahan ini bukan gaya: ujung terang gradasi penuh (`#c8dfdb`) tidak punya kon
 
 ## Aturan yang ditegakkan
 
-Lima aturan tidak bisa dijaga compiler, jadi dijaga `npm run check:gates`:
+Enam aturan tidak bisa dijaga compiler, jadi dijaga `npm run check:gates`:
 
 1. **`prisma.entry.*` hanya dari `src/lib/entries/repository.ts`.** Semua tulis ke `Entry.content` melewati `parseEntryContent()`. Ini yang menjaga kolom JSONB tetap punya bentuk.
 2. **`startOfDay`/`endOfDay` hanya dari `src/lib/time.ts`.** Batas hari dihitung di `Asia/Jakarta` yang dipatok konstan — bukan dari browser, bukan UTC.
 3. **`prisma.tag` / `prisma.entryLink` juga hanya dari repository.**
 4. **`@/lib/prisma` mentah tidak boleh diimpor komponen atau halaman** — client mentah melewati penyaring `userId`.
 5. **Setiap `$queryRaw` wajib memuat `userId`.** SQL mentah tidak tersentuh extension Prisma.
+6. **Setiap query di jalur sistem wajib menyebut `ownerId`.** Cron berjalan tanpa sesi, jadi tidak ada yang menyuntikkannya.
 
 Jalankan sebelum commit:
 

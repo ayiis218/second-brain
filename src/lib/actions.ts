@@ -9,19 +9,23 @@ import { isOwner, requireUserId } from "@/lib/auth-user";
 import { contentFromFormData } from "@/lib/entries/form";
 import {
   createEntry,
+  createLink,
+  deleteLink,
   deleteOwnAccount,
   deleteTag,
   parseTagList,
   renameTag,
+  searchEntries,
   setTaskStatus,
   softDeleteEntry,
   updateEntry,
 } from "@/lib/entries/repository";
-import { entryTypeSchema } from "@/lib/entries/schemas";
+import { userCreatableTypeSchema } from "@/lib/entries/schemas";
 import { createInvite, revokeInvite } from "@/lib/invites";
+import { runFinanceSync } from "@/lib/sync/finance";
 
 const captureSchema = z.object({
-  type: entryTypeSchema,
+  type: userCreatableTypeSchema,
   body: z.string().trim().min(1, "isi tidak boleh kosong"),
   title: z.string().trim().optional(),
 });
@@ -83,6 +87,27 @@ export async function toggleTaskDone(id: string, done: boolean) {
   revalidateEntryViews();
 }
 
+// --- Tautan antar-entry -----------------------------------------------------
+
+export async function linkEntryAction(fromId: string, toId: string) {
+  await createLink(fromId, toId);
+  revalidatePath(`/entry/${fromId}`);
+  revalidatePath(`/entry/${toId}`);
+}
+
+export async function unlinkEntryAction(linkId: string, entryId: string) {
+  await deleteLink(linkId);
+  revalidatePath(`/entry/${entryId}`);
+}
+
+/** Pencarian untuk pemilih tautan. Hasilnya sudah ber-scope user. */
+export async function searchForLinkAction(query: string, excludeId: string) {
+  const hits = await searchEntries(query, { limit: 8 });
+  return hits
+    .filter((hit) => hit.id !== excludeId)
+    .map((hit) => ({ id: hit.id, type: hit.type, title: hit.title }));
+}
+
 // --- Tag --------------------------------------------------------------------
 
 export async function renameTagAction(id: string, formData: FormData) {
@@ -118,6 +143,23 @@ export async function revokeInviteAction(id: string) {
   const userId = await requireUserId();
   await revokeInvite(id, userId);
   revalidatePath("/settings");
+}
+
+// --- Sync finance (khusus pemilik) -----------------------------------------
+
+/**
+ * Menjalankan sync secara manual. Cron tetap jalur utamanya, tapi di plan
+ * Hobby Vercel cron dibatasi sekali sehari — tanpa tombol ini pemilik harus
+ * menunggu sampai besok untuk melihat transaksi terbaru.
+ */
+export async function syncFinanceAction() {
+  if (!(await isOwner())) throw new Error("Hanya pemilik yang bisa menjalankan sync.");
+
+  const result = await runFinanceSync();
+
+  revalidateEntryViews();
+  revalidatePath("/finance");
+  return result;
 }
 
 // --- Sesi -------------------------------------------------------------------
