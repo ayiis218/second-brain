@@ -103,16 +103,31 @@ if (existing.length > 0) {
   process.exit(0);
 }
 
-for (const statement of statements) {
-  await sql.query(statement);
-  console.log("OK:", statement.slice(0, 70).replace(/\s+/g, " "));
+// Seluruh migrasi dijalankan sebagai SATU transaksi, termasuk pencatatannya
+// ke _prisma_migrations. Sebelumnya tiap statement dikirim sebagai request
+// terpisah, sehingga kegagalan di tengah meninggalkan database setengah jadi —
+// berbahaya begitu migrasi mulai menyentuh data yang sudah ada, bukan hanya
+// membuat tabel baru.
+console.log(`Menjalankan ${statements.length} statement dalam satu transaksi…`);
+
+try {
+  await sql.transaction([
+    ...statements.map((statement) => sql.query(statement)),
+    sql.query(
+      `INSERT INTO "_prisma_migrations"
+         (id, checksum, finished_at, migration_name, applied_steps_count)
+       VALUES ($1, $2, now(), $3, $4)`,
+      [randomUUID(), checksum, migrationName, statements.length],
+    ),
+  ]);
+} catch (error) {
+  console.error(`\nGAGAL — transaksi dibatalkan, database tidak berubah.`);
+  console.error(error.message);
+  process.exit(1);
 }
 
-await sql.query(
-  `INSERT INTO "_prisma_migrations"
-     (id, checksum, finished_at, migration_name, applied_steps_count)
-   VALUES ($1, $2, now(), $3, $4)`,
-  [randomUUID(), checksum, migrationName, statements.length],
-);
+for (const statement of statements) {
+  console.log("OK:", statement.slice(0, 70).replace(/\s+/g, " "));
+}
 
 console.log(`\nMigrasi diterapkan dan dicatat: ${migrationName}`);

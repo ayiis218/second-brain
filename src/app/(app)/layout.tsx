@@ -1,13 +1,27 @@
+import Link from "next/link";
+import { Settings } from "lucide-react";
+
 import { AppSidebar } from "@/components/app-sidebar";
 import { BottomNav } from "@/components/bottom-nav";
 import { ComposeSheet } from "@/components/compose-sheet";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { isOwner } from "@/lib/auth-user";
 
-export default function AppLayout({ children }: LayoutProps<"/">) {
+export default async function AppLayout({ children }: LayoutProps<"/">) {
+  // Hanya boolean yang menyeberang ke komponen klien. NAV_ITEMS memuat
+  // komponen ikon yang tidak bisa diserialisasi, jadi penyaringannya
+  // dilakukan di sisi klien.
+  //
+  // Menyembunyikan menu di sini BUKAN kontrol akses — NAV_ITEMS ikut
+  // ke bundle klien untuk semua orang. Halaman khusus pemilik wajib
+  // memeriksa isOwner() sendiri di server.
+  const owner = await isOwner();
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar isOwner={owner} />
       <SidebarInset>
         {/* Sticky supaya identitas halaman tetap terlihat saat scroll panjang
             di layar kecil. pt-safe menjaga judul lolos dari notch. */}
@@ -15,13 +29,26 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           <SidebarTrigger className="hidden md:inline-flex" />
           <Separator orientation="vertical" className="hidden h-4 md:block" />
           <span className="text-sm font-semibold text-foreground">Second Brain</span>
+
+          {/* Bottom nav mobile dibatasi lima item dan tidak memuat
+              Pengaturan, jadi ini satu-satunya jalan ke sana di layar
+              kecil — termasuk untuk keluar. */}
+          <Button
+            size="icon-touch"
+            variant="ghost"
+            className="ml-auto"
+            aria-label="Pengaturan"
+            render={<Link href="/settings" />}
+          >
+            <Settings className="size-5" aria-hidden />
+          </Button>
         </header>
 
         {/* pb-32 memberi ruang untuk bottom nav (4rem) + FAB di mobile. */}
         <main className="flex-1 p-4 pb-32 md:p-6 md:pb-6">{children}</main>
 
         <ComposeSheet />
-        <BottomNav />
+        <BottomNav isOwner={owner} />
       </SidebarInset>
     </SidebarProvider>
   );

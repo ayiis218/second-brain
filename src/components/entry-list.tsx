@@ -1,15 +1,11 @@
+import Link from "next/link";
+
 import { FadeIn } from "@/components/fade-in";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { MOOD_OPTIONS, TYPE_LABEL } from "@/lib/entries/form";
 import type { EntryWithTags } from "@/lib/entries/repository";
 import { formatDateTime } from "@/lib/time";
-
-const TYPE_LABEL: Record<string, string> = {
-  note: "Catatan",
-  journal: "Journal",
-  task: "Task",
-  transaction: "Transaksi",
-};
 
 /** `content` sudah divalidasi Zod saat ditulis; setiap tipe menjamin `body`. */
 function bodyOf(content: unknown): string {
@@ -20,35 +16,51 @@ function bodyOf(content: unknown): string {
   return "";
 }
 
+function moodOf(content: unknown): string | null {
+  if (content && typeof content === "object" && "mood" in content) {
+    const mood = (content as { mood: unknown }).mood;
+    const found = MOOD_OPTIONS.find((option) => option.value === mood);
+    return found?.emoji ?? null;
+  }
+  return null;
+}
+
 export function EntryCard({ entry, index = 0 }: { entry: EntryWithTags; index?: number }) {
+  const mood = moodOf(entry.content);
+
   return (
     <FadeIn index={index}>
-      <Card>
-        <CardContent className="space-y-2 p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">{TYPE_LABEL[entry.type] ?? entry.type}</Badge>
-            <span className="ml-auto text-xs text-muted-foreground">
-              {formatDateTime(entry.occurredAt)}
-            </span>
-          </div>
-
-          {entry.title ? <h3 className="font-medium leading-snug">{entry.title}</h3> : null}
-
-          <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-            {bodyOf(entry.content)}
-          </p>
-
-          {entry.tags.length > 0 ? (
-            <div className="flex flex-wrap gap-1 pt-1">
-              {entry.tags.map(({ tag }) => (
-                <Badge key={tag.id} variant="outline">
-                  {tag.label}
-                </Badge>
-              ))}
+      {/* Seluruh kartu adalah area ketuk — di layar sentuh, target sekecil
+          judul saja terlalu mudah meleset. */}
+      <Link href={`/entry/${entry.id}`} className="block">
+        <Card className="transition-colors hover:border-ring">
+          <CardContent className="space-y-2 p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">{TYPE_LABEL[entry.type] ?? entry.type}</Badge>
+              {mood ? <span aria-label="Mood">{mood}</span> : null}
+              <span className="ml-auto text-xs text-muted-foreground">
+                {formatDateTime(entry.occurredAt)}
+              </span>
             </div>
-          ) : null}
-        </CardContent>
-      </Card>
+
+            {entry.title ? <h3 className="font-medium leading-snug">{entry.title}</h3> : null}
+
+            <p className="line-clamp-4 whitespace-pre-wrap text-sm text-muted-foreground">
+              {bodyOf(entry.content)}
+            </p>
+
+            {entry.tags.length > 0 ? (
+              <div className="flex flex-wrap gap-1 pt-1">
+                {entry.tags.map(({ tag }) => (
+                  <Badge key={tag.id} variant="outline">
+                    {tag.label}
+                  </Badge>
+                ))}
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      </Link>
     </FadeIn>
   );
 }

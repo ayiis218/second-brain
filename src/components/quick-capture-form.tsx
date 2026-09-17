@@ -4,23 +4,22 @@ import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { quickCapture } from "@/lib/actions";
+import { TYPE_OPTIONS } from "@/lib/entries/form";
+import { EntryFields } from "@/components/entries/entry-fields";
+import { TagInput } from "@/components/entries/tag-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-const TYPES = [
-  { value: "note", label: "Catatan" },
-  { value: "journal", label: "Journal" },
-  { value: "task", label: "Task" },
-] as const;
-
 export function QuickCaptureForm({
   onDone,
   autoFocus = false,
+  suggestedTags = [],
 }: {
   onDone?: () => void;
   autoFocus?: boolean;
+  suggestedTags?: string[];
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [type, setType] = useState<string>("note");
@@ -47,7 +46,7 @@ export function QuickCaptureForm({
       {/* Pemilih tipe sebagai tombol, bukan <Select>: satu ketukan alih-alih
           dua, dan pilihannya cuma tiga. */}
       <div role="group" aria-label="Tipe entry" className="flex gap-2">
-        {TYPES.map((t) => (
+        {TYPE_OPTIONS.map((t) => (
           <Button
             key={t.value}
             type="button"
@@ -79,6 +78,11 @@ export function QuickCaptureForm({
           className="min-h-28"
         />
       </div>
+
+      {/* Field berubah mengikuti tipe — form tidak seragam untuk semua entry. */}
+      <EntryFields type={type} />
+
+      <TagInput suggestions={suggestedTags} />
 
       <Button type="submit" size="touch" className="w-full md:w-auto" disabled={pending}>
         {pending ? "Menyimpan…" : "Simpan"}

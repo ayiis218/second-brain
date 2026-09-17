@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { NAV_ITEMS } from "@/components/nav-items";
+import { visibleNavItems } from "@/components/nav-items";
 import {
   Sidebar,
   SidebarContent,
@@ -16,8 +16,12 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-export function AppSidebar() {
+export function AppSidebar({ isOwner }: { isOwner: boolean }) {
   const pathname = usePathname();
+  // Daftar menu dirakit di sini, bukan diterima sebagai prop: NavItem
+  // memuat komponen ikon, dan komponen tidak bisa diserialisasi dari
+  // Server Component ke Client Component.
+  const items = visibleNavItems(isOwner);
 
   return (
     <Sidebar>
@@ -33,7 +37,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV_ITEMS.map((item) => (
+              {items.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     isActive={pathname === item.href}
