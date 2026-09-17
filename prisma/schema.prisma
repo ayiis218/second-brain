@@ -25,6 +25,7 @@ model User {
   tags       Tag[]
   entryLinks EntryLink[]
 
+  legacyItems     LegacyItem[]
   invitesCreated  Invite[] @relation("InviteCreator")
   invitesRedeemed Invite[] @relation("InviteRedeemer")
 }
@@ -198,4 +199,69 @@ model SyncState {
   lastRunAt DateTime?
   lastError String?
   updatedAt DateTime  @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Legacy — gudang informasi untuk ahli waris (Fase 5A)
+//
+// TABEL SENDIRI, BUKAN Entry. Trigger `entry_before_write` mengindeks title
+// dan content->>'body' ke searchVector dalam teks biasa; menyimpan nomor
+// rekening di sana akan membocorkannya lewat satu dump database, seberapa
+// pun rapi enkripsi di kolom lain. Lihat rencana-fase-5-legacy.md §2.
+// ---------------------------------------------------------------------------
+
+enum LegacyCategory {
+  KEUANGAN
+  INVESTASI
+  ASET
+  DOKUMEN
+  AKSES_DIGITAL
+  UTANG_PIUTANG
+  KONTAK
+  INSTRUKSI
+}
+
+model LegacyItem {
+  id       String         @id @default(cuid())
+  userId   String
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category LegacyCategory
+
+  /// Seluruh isi item ada di dalam blob ini. TIDAK ADA field plaintext
+  /// selain category — termasuk judulnya.
+  ciphertext Bytes
+  iv         Bytes
+  authTag    Bytes
+  /// Data key item ini, terbungkus master key.
+  wrappedKey Bytes
+  /// Versi master key yang membungkus. Memungkinkan pindah ke KMS nanti
+  /// dengan membungkus ulang data key, bukan mengenkripsi ulang isinya.
+  keyVersion Int    @default(1)
+
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments LegacyAttachment[]
+
+  @@index([userId, category, sortOrder])
+}
+
+model LegacyAttachment {
+  id     String     @id @default(cuid())
+  itemId String
+  item   LegacyItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  /// Kunci objek di R2. Nama berkas asli ada di dalam ciphertext item,
+  /// bukan di sini — nama berkas sering membocorkan isinya.
+  objectKey  String
+  mimeType   String
+  sizeBytes  Int
+  iv         Bytes
+  authTag    Bytes
+  wrappedKey Bytes
+  keyVersion Int    @default(1)
+  createdAt  DateTime @default(now())
+
+  @@index([itemId])
 }

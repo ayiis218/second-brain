@@ -190,6 +190,15 @@ export async function listEntries(opts?: {
   limit?: number;
   tagId?: string;
   cursor?: string;
+  /**
+   * Hanya entry yang ditulis sendiri, tanpa hasil sync.
+   *
+   * Beranda memakainya. Data sync tumbuh jauh lebih cepat daripada catatan
+   * buatan tangan — sekali sync bisa membawa ratusan baris sekaligus — jadi
+   * daftar campuran akan SELALU didominasi hasil sync, berapa pun batasnya
+   * dinaikkan. Transaksinya tetap ada di /finance, timeline, dan search.
+   */
+  nativeOnly?: boolean;
 }) {
   const db = await scopedDb();
   const limit = opts?.limit ?? 50;
@@ -204,6 +213,7 @@ export async function listEntries(opts?: {
       // habit_log tidak punya isi untuk dibaca — menampilkannya di timeline
       // hanya membanjiri linimasa dengan baris kosong.
       ...(opts?.type ? { type: opts.type } : { NOT: { type: "habit_log" } }),
+      ...(opts?.nativeOnly ? { source: "NATIVE" } : {}),
       ...(opts?.tagId ? { tags: { some: { tagId: opts.tagId } } } : {}),
       ...(cursor
         ? {
@@ -229,6 +239,21 @@ export async function listEntries(opts?: {
     hasMore,
     nextCursor: hasMore && last ? encodeEntryCursor(last) : null,
   };
+}
+
+/**
+ * Hitungan sungguhan, bukan panjang halaman yang sedang tampil. Menampilkan
+ * "20+" karena halamannya berpaginasi adalah angka yang menyesatkan, dan itu
+ * lebih buruk daripada tidak ada angka.
+ */
+export async function countEntries(opts?: { type?: EntryType }) {
+  const db = await scopedDb();
+  return db.entry.count({
+    where: {
+      deletedAt: null,
+      ...(opts?.type ? { type: opts.type } : { NOT: { type: "habit_log" } }),
+    },
+  });
 }
 
 export async function getEntry(id: string) {

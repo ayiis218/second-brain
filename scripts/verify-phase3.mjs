@@ -109,6 +109,47 @@ await sql.query(`DELETE FROM "Entry" WHERE id = 'v4-tx-a'`);
 const orphan = await sql.query(`SELECT id FROM "EntryLink" WHERE id = 'v4-link'`);
 check("menghapus entry ikut menghapus tautannya (cascade)", orphan.length === 0);
 
+// --- Beranda tidak boleh memuat entry hasil sync -------------------------------
+// Regresi yang pernah terjadi: feed beranda memakai listEntries tanpa filter
+// sumber, sehingga 82 dari 82 baris adalah transaksi hasil sync — rentangnya
+// sepuluh tahun, dan catatan buatan sendiri tenggelam seluruhnya.
+// Transaksi A sudah dihapus di blok sebelumnya, jadi satu dibuat lagi di sini —
+// tanpa itu perbandingan "dengan filter" vs "tanpa filter" tidak membuktikan
+// apa pun karena kedua sisi sama-sama kosong dari entry sync.
+await sql.query(
+  `INSERT INTO "Entry" (id, "userId", type, title, content, "occurredAt", source, "sourceId")
+   VALUES ('v4-tx-a2', $1, 'transaction', 'Makan', $2::jsonb, now(), 'FINANCE', 'TX-200')`,
+  [A, TX_CONTENT],
+);
+await sql.query(
+  `INSERT INTO "Entry" (id, "userId", type, title, content, "occurredAt")
+   VALUES ('v4-note-a', $1, 'note', 'Catatan tangan', '{"body":"ditulis sendiri"}', now())`,
+  [A],
+);
+
+const nativeFeed = await sql.query(
+  `SELECT id, source FROM "Entry"
+    WHERE "userId" = $1 AND "deletedAt" IS NULL AND type <> 'habit_log'
+      AND source = 'NATIVE'`,
+  [A],
+);
+check(
+  "feed beranda hanya memuat entry buatan sendiri",
+  nativeFeed.length > 0 && nativeFeed.every((r) => r.source === "NATIVE"),
+  `${nativeFeed.length} baris, semua NATIVE`,
+);
+
+const mixedFeed = await sql.query(
+  `SELECT count(*)::int AS n FROM "Entry"
+    WHERE "userId" = $1 AND "deletedAt" IS NULL AND type <> 'habit_log'`,
+  [A],
+);
+check(
+  "tanpa filter sumber, transaksi memang ikut (alasan filternya perlu)",
+  mixedFeed[0].n > nativeFeed.length,
+  `${mixedFeed[0].n} vs ${nativeFeed.length}`,
+);
+
 // --- SyncState ada dan tunggal ------------------------------------------------
 const cols = await sql.query(
   `SELECT column_name FROM information_schema.columns WHERE table_name = 'SyncState'`,

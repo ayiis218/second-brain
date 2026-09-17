@@ -7,7 +7,9 @@ import { listEntries } from "@/lib/entries/repository";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const { entries, nextCursor } = await listEntries({ limit: 20 });
+  // nativeOnly: beranda untuk hal yang kamu tulis sendiri. Transaksi hasil
+  // sync punya rumahnya sendiri di /finance.
+  const { entries, nextCursor } = await listEntries({ limit: 20, nativeOnly: true });
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4">
@@ -17,6 +19,7 @@ export default async function DashboardPage() {
       <EntryFeed
         initialEntries={entries}
         initialCursor={nextCursor}
+        nativeOnly
         empty={
           <>
             Belum ada entry. Ketuk tombol{" "}

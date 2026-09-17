@@ -14,7 +14,13 @@ import { formatDayLabel } from "@/lib/time";
  * pengelompokan dilakukan server untuk halaman pertama, dan mengulangnya di
  * klien berarti menduplikasi aturan batas hari WIB di dua tempat.
  */
-export function TimelineMore({ initialCursor }: { initialCursor: string }) {
+export function TimelineMore({
+  initialCursor,
+  type,
+}: {
+  initialCursor: string;
+  type?: string;
+}) {
   const [entries, setEntries] = useState<EntryWithTags[]>([]);
   const [cursor, setCursor] = useState<string | null>(initialCursor);
   const [pending, startTransition] = useTransition();
@@ -23,7 +29,7 @@ export function TimelineMore({ initialCursor }: { initialCursor: string }) {
     if (!cursor) return;
     startTransition(async () => {
       try {
-        const next = await loadMoreEntriesAction({ cursor });
+        const next = await loadMoreEntriesAction({ cursor, type });
         setEntries((prev) => [...prev, ...next.entries]);
         setCursor(next.nextCursor);
       } catch (error) {

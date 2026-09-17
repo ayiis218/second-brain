@@ -131,6 +131,7 @@ export async function loadMoreEntriesAction(params: {
   cursor: string;
   type?: string;
   tagId?: string;
+  nativeOnly?: boolean;
 }) {
   // listEntries sudah ber-scope user lewat sesi, jadi cursor dari klien tidak
   // bisa dipakai mengintip data orang lain — paling jauh ia hanya menggeser
@@ -139,6 +140,9 @@ export async function loadMoreEntriesAction(params: {
     cursor: params.cursor,
     type: isEntryType(params.type) ? params.type : undefined,
     tagId: params.tagId,
+    // Wajib ikut dibawa: tanpa ini halaman pertama bersih tapi halaman
+    // kedua tiba-tiba memuat transaksi lagi.
+    nativeOnly: params.nativeOnly,
   });
 }
 

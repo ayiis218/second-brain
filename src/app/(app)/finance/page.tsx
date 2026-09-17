@@ -4,7 +4,7 @@ import { EntryFeed } from "@/components/entry-feed";
 import { SyncButton } from "@/components/sync-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { isOwner } from "@/lib/auth-user";
-import { listEntries } from "@/lib/entries/repository";
+import { countEntries, listEntries } from "@/lib/entries/repository";
 import { getSyncState } from "@/lib/sync/finance";
 import { formatDateTime } from "@/lib/time";
 
@@ -34,9 +34,10 @@ export default async function FinancePage() {
   // sendiri. 404, bukan 403: keberadaan modul pun tidak perlu dibocorkan.
   if (!(await isOwner())) notFound();
 
-  const [entries, state] = await Promise.all([
+  const [entries, state, txCount] = await Promise.all([
     listEntries({ type: "transaction", limit: 20 }),
     getSyncState(),
+    countEntries({ type: "transaction" }),
   ]);
 
   const total = entries.entries.reduce((sum, entry) => {
@@ -68,7 +69,7 @@ export default async function FinancePage() {
             </div>
             <div className="flex justify-between gap-3">
               <dt>Transaksi tersimpan</dt>
-              <dd className="text-right">{entries.entries.length}+</dd>
+              <dd className="text-right">{txCount}</dd>
             </div>
             <div className="flex justify-between gap-3">
               <dt>Selisih (masuk − keluar)</dt>

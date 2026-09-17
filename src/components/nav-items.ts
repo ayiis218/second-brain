@@ -8,6 +8,7 @@ import {
   Sparkles,
   Search,
   Settings,
+  ShieldCheck,
   Trash2,
   type LucideIcon,
 } from "lucide-react";
@@ -30,6 +31,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/search", label: "Cari", icon: Search },
   { href: "/timeline", label: "Timeline", icon: CalendarClock },
   { href: "/finance", label: "Finance", icon: Wallet, ownerOnly: true },
+  { href: "/legacy", label: "Legacy", icon: ShieldCheck, ownerOnly: true },
   { href: "/trash", label: "Tempat sampah", icon: Trash2 },
   { href: "/settings", label: "Pengaturan", icon: Settings },
 ];

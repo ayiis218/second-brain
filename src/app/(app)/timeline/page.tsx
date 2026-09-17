@@ -1,6 +1,8 @@
 import { EmptyState, EntryCard } from "@/components/entry-list";
+import { TimelineFilter } from "@/components/timeline-filter";
 import { TimelineMore } from "@/components/timeline-more";
 import { listEntries, type EntryWithTags } from "@/lib/entries/repository";
+import { isEntryType } from "@/lib/entries/schemas";
 import { dayKey, formatDayLabel } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
@@ -26,13 +28,16 @@ function groupByDay(entries: EntryWithTags[]) {
   return [...groups.entries()];
 }
 
-export default async function TimelinePage() {
-  const { entries, nextCursor } = await listEntries({ limit: 50 });
+export default async function TimelinePage({ searchParams }: PageProps<"/timeline">) {
+  const { type } = await searchParams;
+  const typeFilter = isEntryType(type) ? type : undefined;
+  const { entries, nextCursor } = await listEntries({ limit: 50, type: typeFilter });
   const groups = groupByDay(entries);
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
       <h1 className="px-1 text-lg font-semibold">Timeline</h1>
+      <TimelineFilter />
 
       {groups.length === 0 ? (
         <EmptyState>Belum ada entry untuk ditampilkan.</EmptyState>
@@ -52,7 +57,7 @@ export default async function TimelinePage() {
       )}
 
       {nextCursor ? (
-        <TimelineMore initialCursor={nextCursor} />
+        <TimelineMore initialCursor={nextCursor} type={typeFilter} />
       ) : (
         <p className="py-2 text-center text-xs text-muted-foreground">Sudah sampai ujung.</p>
       )}
