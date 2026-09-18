@@ -13,7 +13,7 @@ Pendaftaran **hanya lewat undangan** yang dibuat pemilik (`OWNER_EMAIL`) di `/se
 
 Isolasi datanya berlapis tiga — lihat `../rencana-aplikasi-second-brain.md` §5.1:
 
-1. Akses Prisma untuk `Entry`/`Tag`/`EntryLink` hanya dari `src/lib/entries/repository.ts`.
+1. Akses Prisma untuk `Entry`/`Tag`/`EntryLink` hanya dari `src/lib/entries/repository/`.
 2. Repository membaca sesi sendiri lewat `requireUserId()` — tidak ada fungsi yang menerima `userId` sebagai parameter, jadi tidak ada yang bisa lupa mengirimnya.
 3. `src/lib/db.ts` menyuntikkan `where.userId` otomatis, dan **fail closed**: `findUnique`/`update`/`delete`/`upsert` pada model ber-scope melempar error, karena penyuntikan di sana bergantung pada perilaku yang terlalu halus untuk diandalkan.
 
@@ -154,7 +154,7 @@ Pemisahan ini bukan gaya: ujung terang gradasi penuh (`#c8dfdb`) tidak punya kon
 
 Enam aturan tidak bisa dijaga compiler, jadi dijaga `npm run check:gates`:
 
-1. **`prisma.entry.*` hanya dari `src/lib/entries/repository.ts`.** Semua tulis ke `Entry.content` melewati `parseEntryContent()`. Ini yang menjaga kolom JSONB tetap punya bentuk.
+1. **`prisma.entry.*` hanya dari `src/lib/entries/repository/`.** Semua tulis ke `Entry.content` melewati `parseEntryContent()`. Ini yang menjaga kolom JSONB tetap punya bentuk.
 2. **`startOfDay`/`endOfDay` hanya dari `src/lib/time.ts`.** Batas hari dihitung di `Asia/Jakarta` yang dipatok konstan — bukan dari browser, bukan UTC.
 3. **`prisma.tag` / `prisma.entryLink` juga hanya dari repository.**
 4. **`@/lib/prisma` mentah tidak boleh diimpor komponen atau halaman** — client mentah melewati penyaring `userId`.

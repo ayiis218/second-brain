@@ -1,7 +1,7 @@
-import { EntryFeed } from "@/components/entry-feed";
-import { FinanceSummaryCard } from "@/components/finance-summary-card";
-import { QuickCapture } from "@/components/quick-capture";
-import { TodaySummary } from "@/components/today-summary";
+import { EntryFeed } from "@/components/entries/entry-feed";
+import { FinanceSummaryCard } from "@/components/finance/finance-summary-card";
+import { QuickCapture } from "@/components/entries/quick-capture";
+import { TodaySummary } from "@/components/dashboard/today-summary";
 import { listEntries } from "@/lib/entries/repository";
 
 // Selalu baca data terbaru per request; tidak ada yang berguna untuk di-prerender.

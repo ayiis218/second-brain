@@ -1,6 +1,7 @@
-import { EmptyState, EntryCard } from "@/components/entry-list";
-import { TimelineFilter } from "@/components/timeline-filter";
-import { TimelineMore } from "@/components/timeline-more";
+import { EntryCard } from "@/components/entries/entry-list";
+import { EmptyState } from "@/components/shared/empty-state";
+import { TimelineFilter } from "@/components/timeline/timeline-filter";
+import { TimelineMore } from "@/components/timeline/timeline-more";
 import { listEntries, type EntryWithTags } from "@/lib/entries/repository";
 import { isEntryType } from "@/lib/entries/schemas";
 import { dayKey, formatDayLabel } from "@/lib/time";

@@ -4,18 +4,12 @@ import { EntryEditor } from "@/components/entries/entry-editor";
 import { EntryLinks } from "@/components/entries/entry-links";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { getContentField } from "@/lib/entries/content";
 import { TYPE_LABEL } from "@/lib/entries/form";
 import { getEntry, listLinks, listTags } from "@/lib/entries/repository";
 import { formatDateTime, isoToDateInput } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
-
-function contentField<T>(content: unknown, key: string): T | null {
-  if (content && typeof content === "object" && key in content) {
-    return (content as Record<string, T>)[key] ?? null;
-  }
-  return null;
-}
 
 export default async function EntryDetailPage({ params }: PageProps<"/entry/[id]">) {
   const { id } = await params;
@@ -26,7 +20,7 @@ export default async function EntryDetailPage({ params }: PageProps<"/entry/[id]
   const entry = await getEntry(id);
   if (!entry) notFound();
 
-  const body = contentField<string>(entry.content, "body") ?? "";
+  const body = getContentField<string>(entry.content, "body") ?? "";
   const tags = entry.tags.map(({ tag }) => tag.label);
 
   const links = await listLinks(entry.id);
@@ -85,10 +79,10 @@ export default async function EntryDetailPage({ params }: PageProps<"/entry/[id]
         suggestedTags={allTags.map((tag) => tag.label)}
         backTo={backTo}
         fieldDefaults={{
-          mood: contentField<number>(entry.content, "mood"),
-          status: contentField<string>(entry.content, "status"),
-          priority: contentField<string>(entry.content, "priority"),
-          dueAt: isoToDateInput(contentField<string>(entry.content, "dueAt")),
+          mood: getContentField<number>(entry.content, "mood"),
+          status: getContentField<string>(entry.content, "status"),
+          priority: getContentField<string>(entry.content, "priority"),
+          dueAt: isoToDateInput(getContentField<string>(entry.content, "dueAt")),
         }}
       />
       <EntryLinks entryId={entry.id} links={links} />

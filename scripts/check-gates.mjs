@@ -1,6 +1,6 @@
 // Memeriksa dua aturan Fase 1 yang tidak bisa ditegakkan compiler:
 //
-//   1. prisma.entry.* hanya boleh dipanggil dari src/lib/entries/repository.ts
+//   1. prisma.entry.* hanya boleh dipanggil dari src/lib/entries/repository/
 //      — inilah yang menjaga Entry.content selalu lewat validasi Zod.
 //   2. startOfDay/endOfDay hanya boleh dipanggil dari src/lib/time.ts
 //      — batas hari wajib dihitung dalam Asia/Jakarta, bukan UTC/lokal.
@@ -11,12 +11,24 @@ import { join, relative } from "node:path";
 
 const ROOT = "src";
 
+/**
+ * Cocokkan path terhadap daftar izin.
+ *
+ * Entri yang diakhiri "/" berarti SELURUH isi folder itu, bukan satu berkas.
+ * Dibutuhkan sejak repository dipecah per domain: aturannya memang berlaku
+ * untuk modulnya sebagai satu kesatuan, bukan untuk satu nama berkas yang
+ * kebetulan dipakai waktu aturan ini ditulis.
+ */
+function listed(paths, rel) {
+  return paths.some((p) => (p.endsWith("/") ? rel.startsWith(p) : p === rel));
+}
+
 const GATES = [
   {
     name: "prisma.entry di luar repository",
     pattern: /\bprisma\.entry\b/,
-    allow: ["src/lib/entries/repository.ts", "src/lib/entries/sync-repository.ts"],
-    hint: "Pakai fungsi dari src/lib/entries/repository.ts supaya content tervalidasi Zod.",
+    allow: ["src/lib/entries/repository/", "src/lib/entries/sync-repository.ts"],
+    hint: "Pakai fungsi dari src/lib/entries/repository/ supaya content tervalidasi Zod.",
   },
   {
     name: "startOfDay/endOfDay di luar lib/time",
@@ -43,14 +55,14 @@ const GATES = [
     name: "isi legacy bocor ke jalur export biasa",
     pattern: /legacyItem|LegacyItem/,
     allow: ["src/lib/legacy/repository.ts", "src/lib/legacy/actions.ts"],
-    only: ["src/app/api/export/route.ts", "src/lib/entries/repository.ts"],
+    only: ["src/app/api/export/route.ts", "src/lib/entries/repository/"],
     hint: "Vault punya jalur export terenkripsi sendiri; jangan ikut di /api/export biasa.",
   },
   // --- Isolasi data multi-user (Fase 2.0) ---
   {
     name: "model ber-scope diakses tanpa lewat repository",
     pattern: /\bprisma\.(tag|entryTag|entryLink)\b/,
-    allow: ["src/lib/entries/repository.ts", "src/lib/db.ts"],
+    allow: ["src/lib/entries/repository/", "src/lib/db.ts"],
     hint: "Model ber-scope user hanya boleh diakses lewat repository yang memakai scopedDb().",
   },
   {
@@ -58,7 +70,7 @@ const GATES = [
     pattern: /from ["']@\/lib\/prisma["']/,
     allow: [
       "src/lib/db.ts",
-      "src/lib/entries/repository.ts",
+      "src/lib/entries/repository/",
       "src/lib/invites.ts",
       // Jalur SISTEM (cron), berjalan tanpa sesi. Aturannya diganti
       // aturan lain: setiap query di sana wajib menyebut ownerId —
@@ -139,10 +151,10 @@ for (const gate of GATES) {
 
   for (const file of files) {
     const rel = relative(".", file);
-    if (gate.allow.includes(rel)) continue;
+    if (listed(gate.allow, rel)) continue;
     // `only` membalik logikanya: alih-alih memindai semua berkas kecuali
     // yang diizinkan, ia hanya memindai daftar yang disebut.
-    if (gate.only && !gate.only.includes(rel)) continue;
+    if (gate.only && !listed(gate.only, rel)) continue;
 
     const lines = readFileSync(file, "utf8").split("\n");
     lines.forEach((line, i) => {

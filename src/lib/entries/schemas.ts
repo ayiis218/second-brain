@@ -106,7 +106,7 @@ export function isEntryType(v: unknown): v is EntryType {
  * SATU-SATUNYA jalan menulis Entry.content.
  *
  * Tidak boleh ada prisma.entry.create/update dengan content mentah di mana pun
- * selain src/lib/entries/repository.ts. Ini yang menjaga kolom JSONB tidak
+ * selain src/lib/entries/repository/. Ini yang menjaga kolom JSONB tidak
  * berubah jadi tempat sampah. Diverifikasi dengan `npm run check:gates`.
  */
 export function parseEntryContent<T extends EntryType>(

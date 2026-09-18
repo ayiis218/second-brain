@@ -1,4 +1,4 @@
-import { ShareCapture } from "@/components/share-capture";
+import { ShareCapture } from "@/components/share/share-capture";
 
 export const dynamic = "force-dynamic";
 

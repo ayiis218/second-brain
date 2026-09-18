@@ -1,8 +1,8 @@
 import Link from "next/link";
 
-import { SearchInput } from "@/components/search-input";
-import { EmptyState } from "@/components/entry-list";
-import { FadeIn } from "@/components/fade-in";
+import { SearchInput } from "@/components/search/search-input";
+import { EmptyState } from "@/components/shared/empty-state";
+import { FadeIn } from "@/components/shared/fade-in";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TYPE_LABEL } from "@/lib/entries/form";

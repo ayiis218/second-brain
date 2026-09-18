@@ -1,17 +1,10 @@
-import { EmptyState } from "@/components/entry-list";
-import { TrashList, type TrashRow } from "@/components/trash-list";
+import { EmptyState } from "@/components/shared/empty-state";
+import { TrashList, type TrashRow } from "@/components/trash/trash-list";
+import { getEntryBody } from "@/lib/entries/content";
 import { listTrash } from "@/lib/entries/repository";
 import { formatDateTime } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
-
-function bodyOf(content: unknown): string {
-  if (content && typeof content === "object" && "body" in content) {
-    const body = (content as { body: unknown }).body;
-    if (typeof body === "string") return body;
-  }
-  return "";
-}
 
 export default async function TrashPage() {
   const entries = await listTrash();
@@ -20,7 +13,7 @@ export default async function TrashPage() {
     id: entry.id,
     type: entry.type,
     title: entry.title,
-    body: bodyOf(entry.content),
+    body: getEntryBody(entry.content),
     deletedLabel: entry.deletedAt ? formatDateTime(entry.deletedAt) : "—",
   }));
 

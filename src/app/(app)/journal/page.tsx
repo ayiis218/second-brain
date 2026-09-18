@@ -1,18 +1,11 @@
-import { EntryFeed } from "@/components/entry-feed";
+import { EntryFeed } from "@/components/entries/entry-feed";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getEntryMood } from "@/lib/entries/content";
 import { MOOD_OPTIONS } from "@/lib/entries/form";
 import { listEntries } from "@/lib/entries/repository";
 import { dayKey } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
-
-function moodOf(content: unknown): number | null {
-  if (content && typeof content === "object" && "mood" in content) {
-    const mood = (content as { mood: unknown }).mood;
-    return typeof mood === "number" ? mood : null;
-  }
-  return null;
-}
 
 /**
  * Strip 30 hari terakhir. Dibuat dengan CSS grid, bukan pustaka chart —
@@ -72,7 +65,7 @@ export default async function JournalPage() {
 
   const moodByDay = new Map<string, number>();
   for (const entry of moodSource.entries) {
-    const mood = moodOf(entry.content);
+    const mood = getEntryMood(entry.content);
     const key = dayKey(entry.occurredAt);
     if (mood && !moodByDay.has(key)) moodByDay.set(key, mood);
   }
