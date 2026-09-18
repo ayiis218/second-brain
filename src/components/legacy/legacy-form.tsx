@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useRef, useState } from "react";
 
+import { useAsyncAction } from "@/hooks/use-async-action";
 import { createLegacyItemAction, updateLegacyItemAction } from "@/lib/legacy/actions";
 import {
   CATEGORY_LABEL,
@@ -45,24 +45,24 @@ export function LegacyForm({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [category, setCategory] = useState(defaultCategory ?? "KEUANGAN");
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useAsyncAction();
 
   const claimRequired = CLAIM_REQUIRED.has(category);
 
   function onSubmit(formData: FormData) {
-    startTransition(async () => {
-      try {
+    run(
+      async () => {
+        // Form hanya direset saat membuat item baru. Saat mengubah, isian
+        // yang barusan disimpan justru harus tetap terlihat.
         if (id) await updateLegacyItemAction(id, formData);
         else {
           await createLegacyItemAction(formData);
           formRef.current?.reset();
         }
-        toast.success("Tersimpan");
         onDone?.();
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal menyimpan");
-      }
-    });
+      },
+      { success: "Tersimpan", error: "Gagal menyimpan" },
+    );
   }
 
   return (

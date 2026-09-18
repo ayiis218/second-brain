@@ -1,5 +1,5 @@
-import { EmptyState } from "@/components/entry-list";
-import { HabitList } from "@/components/habit-list";
+import { EmptyState } from "@/components/shared/empty-state";
+import { HabitList } from "@/components/habit/habit-list";
 import { listHabits } from "@/lib/entries/repository";
 import { dayKey, recentDayKeys } from "@/lib/time";
 

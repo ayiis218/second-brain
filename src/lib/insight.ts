@@ -1,3 +1,4 @@
+import { getContentField } from "@/lib/entries/content";
 import { listEntries, listHabits } from "@/lib/entries/repository";
 import { dayKey, recentDayKeys } from "@/lib/time";
 
@@ -28,13 +29,6 @@ export type Insight = {
   previous: PeriodStats;
   habitStreaks: { name: string; streak: number }[];
 };
-
-function field<T>(content: unknown, key: string): T | null {
-  if (content && typeof content === "object" && key in content) {
-    return (content as Record<string, T>)[key] ?? null;
-  }
-  return null;
-}
 
 function emptyStats(): PeriodStats {
   return {
@@ -108,7 +102,7 @@ export function buildInsight(data: InsightData, days: number): Insight {
 
     if (entry.type === "journal") {
       stats.journals++;
-      const mood = field<number>(entry.content, "mood");
+      const mood = getContentField<number>(entry.content, "mood");
       if (typeof mood === "number") {
         stats.moodDays++;
         if (mood >= 4) stats.goodMoodDays++;
@@ -118,13 +112,13 @@ export function buildInsight(data: InsightData, days: number): Insight {
 
     if (entry.type === "note") stats.notes++;
 
-    if (entry.type === "task" && field<string>(entry.content, "status") === "done") {
+    if (entry.type === "task" && getContentField<string>(entry.content, "status") === "done") {
       stats.tasksDone++;
     }
 
     if (entry.type === "transaction") {
-      const amount = Number(field<string>(entry.content, "amount") ?? "0");
-      const txType = field<string>(entry.content, "txType");
+      const amount = Number(getContentField<string>(entry.content, "amount") ?? "0");
+      const txType = getContentField<string>(entry.content, "txType");
       if (!Number.isNaN(amount) && txType !== "INCOME") {
         spendingSum[bucket] += amount;
         hasSpending[bucket] = true;
@@ -133,7 +127,7 @@ export function buildInsight(data: InsightData, days: number): Insight {
   }
 
   for (const log of habitLogs) {
-    const key = field<string>(log.content, "dayKey");
+    const key = getContentField<string>(log.content, "dayKey");
     if (!key) continue;
     if (currentKeys.has(key)) current.habitChecks++;
     else if (previousKeys.has(key)) previous.habitChecks++;

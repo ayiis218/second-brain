@@ -1,0 +1,75 @@
+"use client";
+
+import { useState } from "react";
+
+import { useAsyncAction } from "@/hooks/use-async-action";
+import { loadMoreEntriesAction } from "@/lib/actions";
+import { EntryCard } from "@/components/entries/entry-list";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
+import type { EntryWithTags } from "@/lib/entries/repository";
+
+/**
+ * Daftar entry dengan "Muat lagi".
+ *
+ * Bukan infinite scroll: di timeline yang panjang, memuat otomatis membuat
+ * orang tidak pernah sampai ke bawah halaman — dan tidak pernah tahu
+ * datanya sudah habis atau belum.
+ */
+export function EntryFeed({
+  initialEntries,
+  initialCursor,
+  type,
+  tagId,
+  nativeOnly,
+  empty,
+}: {
+  initialEntries: EntryWithTags[];
+  initialCursor: string | null;
+  type?: string;
+  tagId?: string;
+  nativeOnly?: boolean;
+  empty: React.ReactNode;
+}) {
+  const [entries, setEntries] = useState(initialEntries);
+  const [cursor, setCursor] = useState(initialCursor);
+  const { pending, run } = useAsyncAction();
+
+  function loadMore() {
+    if (!cursor) return;
+    // Tanpa toast sukses: baris yang bertambah di layar sudah jadi buktinya.
+    run(
+      async () => {
+        const next = await loadMoreEntriesAction({ cursor, type, tagId, nativeOnly });
+        setEntries((prev) => [...prev, ...next.entries]);
+        setCursor(next.nextCursor);
+      },
+      { error: "Gagal memuat" },
+    );
+  }
+
+  if (entries.length === 0) return <EmptyState>{empty}</EmptyState>;
+
+  return (
+    <div className="space-y-3">
+      {entries.map((entry, i) => (
+        <EntryCard key={entry.id} entry={entry} index={i} />
+      ))}
+
+      {cursor ? (
+        <Button
+          type="button"
+          size="touch"
+          variant="outline"
+          className="w-full"
+          disabled={pending}
+          onClick={loadMore}
+        >
+          {pending ? "Loading…" : "Load more"}
+        </Button>
+      ) : (
+        <p className="py-4 text-center text-xs text-muted-foreground">Sudah sampai ujung.</p>
+      )}
+    </div>
+  );
+}

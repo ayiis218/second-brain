@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
-import { FinancePosition } from "@/components/finance-position";
-import { SyncButton } from "@/components/sync-button";
+import { FinancePosition } from "@/components/finance/finance-position";
+import { SyncButton } from "@/components/finance/sync-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { isOwner } from "@/lib/auth-user";
 import { getFinanceSnapshot } from "@/lib/sync/finance-snapshot";

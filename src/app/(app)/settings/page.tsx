@@ -1,8 +1,8 @@
-import { DeleteAccount } from "@/components/delete-account";
-import { InviteManager, type InviteRow } from "@/components/invite-manager";
-import { SecurityPanel, type DeviceRow } from "@/components/security-panel";
-import { SignOutButton } from "@/components/sign-out-button";
-import { TagManager } from "@/components/tag-manager";
+import { DeleteAccount } from "@/components/settings/delete-account";
+import { InviteManager, type InviteRow } from "@/components/settings/invite-manager";
+import { SecurityPanel, type DeviceRow } from "@/components/settings/security-panel";
+import { SignOutButton } from "@/components/settings/sign-out-button";
+import { TagManager } from "@/components/settings/tag-manager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSessionUser, isOwner, requireUserId } from "@/lib/auth-user";

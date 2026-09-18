@@ -1,18 +1,12 @@
 import { Flame } from "lucide-react";
 
+import { StatRow } from "@/components/shared/stat-row";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatIdr } from "@/lib/format";
 import { buildInsight, loadInsightData, type PeriodStats } from "@/lib/insight";
 
 export const dynamic = "force-dynamic";
-
-function formatIdr(value: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 /**
  * Perbandingan ditampilkan sebagai selisih apa adanya, tanpa kata seperti
@@ -33,6 +27,7 @@ function Delta({ current, previous }: { current: number | null; previous: number
   );
 }
 
+/** Baris statistik Insight: StatRow biasa, plus selisih antar-periode di kanannya. */
 function Stat({
   label,
   value,
@@ -45,13 +40,11 @@ function Stat({
   previous?: number | null;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 border-b py-2 last:border-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="flex items-baseline gap-2">
-        <span className="font-medium tabular-nums">{value}</span>
-        <Delta current={current ?? null} previous={previous ?? null} />
-      </span>
-    </div>
+    <StatRow
+      label={label}
+      value={value}
+      trailing={<Delta current={current ?? null} previous={previous ?? null} />}
+    />
   );
 }
 

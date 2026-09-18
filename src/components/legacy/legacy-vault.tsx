@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { AlertTriangle, ChevronDown, Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
 
+import { useAsyncAction } from "@/hooks/use-async-action";
 import { deleteLegacyItemAction } from "@/lib/legacy/actions";
 import { CATEGORY_LABEL, type LegacyContent } from "@/lib/legacy/schemas";
 import { LegacyForm } from "./legacy-form";
@@ -20,16 +20,12 @@ export type VaultItem = {
 
 function ItemCard({ item }: { item: VaultItem }) {
   const [editing, setEditing] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useAsyncAction();
 
   function onDelete() {
-    startTransition(async () => {
-      try {
-        await deleteLegacyItemAction(item.id);
-        toast.success("Dihapus");
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal menghapus");
-      }
+    run(() => deleteLegacyItemAction(item.id), {
+      success: "Dihapus",
+      error: "Gagal menghapus",
     });
   }
 

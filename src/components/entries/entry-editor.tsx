@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
-
+import { useAsyncAction } from "@/hooks/use-async-action";
 import { deleteEntry, updateEntryAction } from "@/lib/actions";
 import { TYPE_LABEL } from "@/lib/entries/form";
 import { EntryFields, type EntryFieldDefaults } from "@/components/entries/entry-fields";
 import { TagInput } from "@/components/entries/tag-input";
+import { DestructiveConfirm } from "@/components/shared/destructive-confirm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,30 +31,19 @@ export function EntryEditor({
   suggestedTags: string[];
   backTo?: string;
 }) {
-  const [pending, startTransition] = useTransition();
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const { pending, run } = useAsyncAction();
 
   function onSubmit(formData: FormData) {
-    startTransition(async () => {
-      try {
-        await updateEntryAction(id, formData);
-        toast.success("Perubahan disimpan");
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal menyimpan");
-      }
+    run(() => updateEntryAction(id, formData), {
+      success: "Perubahan disimpan",
+      error: "Gagal menyimpan",
     });
   }
 
   function onDelete() {
-    startTransition(async () => {
-      try {
-        // deleteEntry mengarahkan ke backTo setelah berhasil, jadi tidak
-        // ada toast sukses — halamannya sudah berpindah.
-        await deleteEntry(id, backTo);
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal menghapus");
-      }
-    });
+    // Tanpa toast sukses: deleteEntry mengarahkan ke backTo setelah berhasil,
+    // jadi halamannya sudah berpindah.
+    run(() => deleteEntry(id, backTo), { error: "Gagal menghapus" });
   }
 
   return (
@@ -101,45 +89,14 @@ export function EntryEditor({
       </Card>
 
       <Card className="border-destructive/40">
-        <CardContent className="space-y-3 p-4">
-          {confirmingDelete ? (
-            <>
-              <p className="text-sm">
-                Hapus entri ini? Ia akan hilang dari daftar, timeline, dan pencarian.
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  size="touch"
-                  variant="destructive"
-                  className="flex-1"
-                  disabled={pending}
-                  onClick={onDelete}
-                >
-                  Yes, delete
-                </Button>
-                <Button
-                  type="button"
-                  size="touch"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setConfirmingDelete(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </>
-          ) : (
-            <Button
-              type="button"
-              size="touch"
-              variant="outline"
-              className="w-full text-destructive md:w-auto"
-              onClick={() => setConfirmingDelete(true)}
-            >
-              Delete entry
-            </Button>
-          )}
+        <CardContent className="p-4">
+          <DestructiveConfirm
+            trigger="Delete entry"
+            message="Hapus entri ini? Ia akan hilang dari daftar, timeline, dan pencarian."
+            confirmLabel="Yes, delete"
+            pending={pending}
+            onConfirm={onDelete}
+          />
         </CardContent>
       </Card>
     </div>

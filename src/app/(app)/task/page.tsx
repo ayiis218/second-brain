@@ -1,16 +1,10 @@
-import { EmptyState } from "@/components/entry-list";
-import { TaskList, type TaskGroup, type TaskRow } from "@/components/task-list";
+import { EmptyState } from "@/components/shared/empty-state";
+import { TaskList, type TaskGroup, type TaskRow } from "@/components/task/task-list";
+import { getContentField } from "@/lib/entries/content";
 import { listTasks, type EntryWithTags } from "@/lib/entries/repository";
 import { dayKey, dayRange, formatDayLabel } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
-
-function field<T>(content: unknown, key: string): T | null {
-  if (content && typeof content === "object" && key in content) {
-    return (content as Record<string, T>)[key] ?? null;
-  }
-  return null;
-}
 
 /**
  * Pengelompokan memakai dayRange()/dayKey() dari lib/time.ts — batas harinya
@@ -27,16 +21,16 @@ function groupTasks(entries: EntryWithTags[]): TaskGroup[] {
   const undated: TaskRow[] = [];
 
   for (const entry of entries) {
-    const dueIso = field<string>(entry.content, "dueAt");
+    const dueIso = getContentField<string>(entry.content, "dueAt");
     const due = dueIso ? new Date(dueIso) : null;
     const dueKey = due ? dayKey(due) : null;
 
     const row: TaskRow = {
       id: entry.id,
       title: entry.title,
-      body: field<string>(entry.content, "body") ?? "",
-      status: field<string>(entry.content, "status") ?? "todo",
-      priority: field<string>(entry.content, "priority") ?? "medium",
+      body: getContentField<string>(entry.content, "body") ?? "",
+      status: getContentField<string>(entry.content, "status") ?? "todo",
+      priority: getContentField<string>(entry.content, "priority") ?? "medium",
       dueLabel: due ? formatDayLabel(due) : null,
       overdue: Boolean(due && dueKey !== todayKey && due < todayEnd),
     };

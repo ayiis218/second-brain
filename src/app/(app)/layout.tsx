@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Settings } from "lucide-react";
 
-import { AppSidebar } from "@/components/app-sidebar";
-import { BottomNav } from "@/components/bottom-nav";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
