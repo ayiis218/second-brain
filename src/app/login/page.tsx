@@ -45,7 +45,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             }}
           >
             <Button type="submit" size="touch" className="w-full">
-              Masuk dengan Google
+              Sign in with Google
             </Button>
           </form>
         </CardContent>

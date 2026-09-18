@@ -62,14 +62,14 @@ export function EntryEditor({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Ubah {TYPE_LABEL[type] ?? type}</CardTitle>
+          <CardTitle>Edit {TYPE_LABEL[type] ?? type}</CardTitle>
         </CardHeader>
         <CardContent>
           <form action={onSubmit} className="space-y-3">
             <input type="hidden" name="type" value={type} />
 
             <div className="space-y-1.5">
-              <Label htmlFor="edit-title">Judul</Label>
+              <Label htmlFor="edit-title">Title</Label>
               <Input
                 id="edit-title"
                 name="title"
@@ -80,7 +80,7 @@ export function EntryEditor({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="edit-body">Isi</Label>
+              <Label htmlFor="edit-body">Body</Label>
               <Textarea
                 id="edit-body"
                 name="body"
@@ -94,7 +94,7 @@ export function EntryEditor({
             <TagInput suggestions={suggestedTags} defaultTags={tags} />
 
             <Button type="submit" size="touch" className="w-full md:w-auto" disabled={pending}>
-              {pending ? "Menyimpan…" : "Simpan perubahan"}
+              {pending ? "Saving…" : "Save changes"}
             </Button>
           </form>
         </CardContent>
@@ -105,7 +105,7 @@ export function EntryEditor({
           {confirmingDelete ? (
             <>
               <p className="text-sm">
-                Hapus entry ini? Ia akan hilang dari daftar, timeline, dan pencarian.
+                Hapus entri ini? Ia akan hilang dari daftar, timeline, dan pencarian.
               </p>
               <div className="flex gap-2">
                 <Button
@@ -116,7 +116,7 @@ export function EntryEditor({
                   disabled={pending}
                   onClick={onDelete}
                 >
-                  Ya, hapus
+                  Yes, delete
                 </Button>
                 <Button
                   type="button"
@@ -125,7 +125,7 @@ export function EntryEditor({
                   className="flex-1"
                   onClick={() => setConfirmingDelete(false)}
                 >
-                  Batal
+                  Cancel
                 </Button>
               </div>
             </>
@@ -137,7 +137,7 @@ export function EntryEditor({
               className="w-full text-destructive md:w-auto"
               onClick={() => setConfirmingDelete(true)}
             >
-              Hapus entry
+              Delete entry
             </Button>
           )}
         </CardContent>

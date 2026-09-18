@@ -43,7 +43,7 @@ export function TagInput({
 
   return (
     <div className="space-y-1.5">
-      <Label htmlFor="tag-draft">Tag (opsional)</Label>
+      <Label htmlFor="tag-draft">Tag (optional)</Label>
       <input type="hidden" name="tags" value={tags.join(",")} />
 
       {tags.length > 0 ? (
@@ -53,7 +53,7 @@ export function TagInput({
               {tag}
               <button
                 type="button"
-                aria-label={`Hapus tag ${tag}`}
+                aria-label={`Remove tag ${tag}`}
                 className="rounded-full p-0.5 hover:bg-background/60"
                 onClick={() => setTags(tags.filter((t) => t !== tag))}
               >

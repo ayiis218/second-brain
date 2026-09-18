@@ -112,12 +112,12 @@ export function EntryFields({
         />
         <ChoiceField
           name="priority"
-          label="Prioritas"
+          label="Priority"
           options={PRIORITY_OPTIONS}
           defaultValue={defaults?.priority}
         />
         <div className="space-y-1.5">
-          <Label htmlFor="dueAt">Jatuh tempo</Label>
+          <Label htmlFor="dueAt">Due date</Label>
           <Input
             id="dueAt"
             name="dueAt"

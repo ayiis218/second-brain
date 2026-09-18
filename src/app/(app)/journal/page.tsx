@@ -32,7 +32,7 @@ function MoodStrip({ moodByDay }: { moodByDay: Map<string, number> }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Mood 30 hari terakhir</CardTitle>
+        <CardTitle>Mood, last 30 days</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         <div className="grid grid-cols-15 gap-1 sm:grid-cols-30">
@@ -41,8 +41,8 @@ function MoodStrip({ moodByDay }: { moodByDay: Map<string, number> }) {
             return (
               <div
                 key={day.key}
-                title={option ? `${day.key}: ${option.label}` : `${day.key}: belum diisi`}
-                aria-label={option ? `${day.key}: ${option.label}` : `${day.key}: belum diisi`}
+                title={option ? `${day.key}: ${option.label}` : `${day.key}: no journal`}
+                aria-label={option ? `${day.key}: ${option.label}` : `${day.key}: no journal`}
                 className="flex aspect-square items-center justify-center rounded-sm border text-[10px]"
                 style={
                   day.mood

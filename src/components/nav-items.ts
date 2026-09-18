@@ -17,33 +17,42 @@ export type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  /** Hanya tampil untuk pemilik — mis. Finance sync (Fase 3), Legacy (Fase 5). */
+  /** Hanya tampil untuk pemilik — mis. Finance (Fase 3), Legacy (Fase 5). */
   ownerOnly?: boolean;
 };
 
-/** Seluruh menu — dipakai sidebar desktop. */
+/**
+ * Seluruh menu — dipakai sidebar desktop.
+ *
+ * Nama menu (dan judul halaman yang sepadan) memakai Bahasa Inggris; seluruh
+ * kalimat, tombol, dan pesan di luar itu Bahasa Indonesia. Sebelumnya daftar
+ * ini campur — "Task" bersebelahan dengan "Tempat sampah" — sehingga pembaca
+ * harus menebak apakah keduanya jenis hal yang berbeda.
+ */
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/", label: "Beranda", icon: LayoutDashboard },
+  { href: "/", label: "Home", icon: LayoutDashboard },
   { href: "/task", label: "Task", icon: ListChecks },
   { href: "/journal", label: "Journal", icon: BookOpen },
   { href: "/habit", label: "Habit", icon: Repeat },
   { href: "/insight", label: "Insight", icon: Sparkles },
-  { href: "/search", label: "Cari", icon: Search },
+  { href: "/search", label: "Search", icon: Search },
   { href: "/timeline", label: "Timeline", icon: CalendarClock },
   { href: "/finance", label: "Finance", icon: Wallet, ownerOnly: true },
   { href: "/legacy", label: "Legacy", icon: ShieldCheck, ownerOnly: true },
-  { href: "/trash", label: "Tempat sampah", icon: Trash2 },
-  { href: "/settings", label: "Pengaturan", icon: Settings },
+  { href: "/trash", label: "Trash", icon: Trash2 },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 /**
- * Bottom nav mobile hanya memuat lima yang paling sering dipakai — lebih dari
- * itu, tiap target menyempit di bawah lebar ibu jari.
+ * Bottom nav mobile memuat empat menu, bukan lima: slot tengah dipakai tombol
+ * tulis yang menonjol (lihat bottom-nav.tsx). Menulis adalah aksi paling
+ * sering di aplikasi ini, jadi ia yang dapat posisi terbaik — tepat di jalur
+ * ibu jari — bukan sekadar menempel di pojok.
  *
- * Yang tidak muat TIDAK jadi tidak terjangkau: tombol menu di header membuka
- * sidebar sebagai sheet berisi seluruh menu.
+ * "Search" yang keluar dari daftar TIDAK jadi tidak terjangkau: tombol menu di
+ * header membuka sidebar sebagai sheet berisi seluruh menu.
  */
-const MOBILE_HREFS = ["/", "/task", "/habit", "/journal", "/search"];
+const MOBILE_HREFS = ["/", "/task", "/journal", "/habit"];
 
 export function visibleNavItems(isOwner: boolean) {
   return NAV_ITEMS.filter((item) => !item.ownerOnly || isOwner);

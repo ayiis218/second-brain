@@ -25,9 +25,9 @@ export async function FinanceSummaryCard() {
         <CardContent className="space-y-2 p-4">
           <div className="flex items-center gap-2">
             <Wallet className="size-4 text-muted-foreground" aria-hidden />
-            <span className="text-xs text-muted-foreground">Posisi bersih</span>
+            <span className="text-xs text-muted-foreground">Net position</span>
             {stale ? (
-              <span className="ml-auto text-xs text-destructive">perlu diperbarui</span>
+              <span className="ml-auto text-xs text-destructive">needs refresh</span>
             ) : null}
           </div>
 
@@ -37,9 +37,9 @@ export async function FinanceSummaryCard() {
 
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span>Wallet {formatIdr(payload.totals.wallet)}</span>
-            <span>Aset {formatIdr(payload.totals.assets)}</span>
-            <span>Investasi {formatIdr(payload.totals.investments)}</span>
-            <span>Utang {formatIdr(payload.totals.utang)}</span>
+            <span>Assets {formatIdr(payload.totals.assets)}</span>
+            <span>Investments {formatIdr(payload.totals.investments)}</span>
+            <span>Debt {formatIdr(payload.totals.utang)}</span>
           </div>
         </CardContent>
       </Card>

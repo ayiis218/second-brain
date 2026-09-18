@@ -71,19 +71,19 @@ export async function TodaySummary() {
       <Tile
         href="/task"
         icon={ListTodo}
-        label="perlu dikerjakan"
+        label="to do"
         value={String(dueToday.length || open.length)}
       />
       <Tile
         href="/habit"
         icon={habitsLeft === 0 ? CheckCircle2 : Flame}
-        label={habitsLeft === 0 ? "habit beres" : "habit tersisa"}
+        label={habitsLeft === 0 ? "habits done" : "habits left"}
         value={habitsLeft === 0 ? String(bestStreak) : String(habitsLeft)}
       />
       <Tile
         href="/journal"
         icon={Smile}
-        label="mood terakhir"
+        label="last mood"
         value={lastMood ? `${lastMood}/5` : "—"}
       />
     </div>

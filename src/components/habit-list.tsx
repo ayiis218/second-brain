@@ -37,7 +37,7 @@ function HabitRow({ habit, todayKey }: { habit: HabitSummary; todayKey: string }
             type="button"
             role="checkbox"
             aria-checked={done}
-            aria-label={done ? `Batalkan ${habit.name} hari ini` : `Centang ${habit.name} hari ini`}
+            aria-label={done ? `Uncheck ${habit.name} today` : `Check ${habit.name} today`}
             disabled={pending}
             onClick={toggle}
             className={cn(

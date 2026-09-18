@@ -33,38 +33,44 @@ export function contentFromFormData(type: EntryType, formData: FormData) {
 }
 
 export const MOOD_OPTIONS = [
-  { value: 1, label: "Buruk", emoji: "😞" },
-  { value: 2, label: "Kurang", emoji: "🙁" },
-  { value: 3, label: "Biasa", emoji: "😐" },
-  { value: 4, label: "Baik", emoji: "🙂" },
-  { value: 5, label: "Bagus", emoji: "😄" },
+  { value: 1, label: "Bad", emoji: "😞" },
+  { value: 2, label: "Poor", emoji: "🙁" },
+  { value: 3, label: "Okay", emoji: "😐" },
+  { value: 4, label: "Good", emoji: "🙂" },
+  { value: 5, label: "Great", emoji: "😄" },
 ] as const;
 
 export const STATUS_OPTIONS = [
-  { value: "todo", label: "Belum" },
-  { value: "doing", label: "Jalan" },
-  { value: "done", label: "Selesai" },
-  { value: "cancelled", label: "Batal" },
+  { value: "todo", label: "Todo" },
+  { value: "doing", label: "Doing" },
+  { value: "done", label: "Done" },
+  { value: "cancelled", label: "Cancelled" },
 ] as const;
 
 export const PRIORITY_OPTIONS = [
-  { value: "low", label: "Rendah" },
-  { value: "medium", label: "Sedang" },
-  { value: "high", label: "Tinggi" },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
 ] as const;
 
+/**
+ * Nama tipe entry mengikuti nama menu — Inggris — karena keduanya menamai hal
+ * yang sama: badge "Task" pada entry adalah menu "Task" yang sama. Dulu peta
+ * ini campur ("Catatan" bersama "Journal"), jadi satu entry bisa tampak
+ * bertipe lain hanya karena bahasanya berganti.
+ */
 export const TYPE_OPTIONS = [
-  { value: "note", label: "Catatan" },
+  { value: "note", label: "Note" },
   { value: "journal", label: "Journal" },
   { value: "task", label: "Task" },
   { value: "habit", label: "Habit" },
 ] as const;
 
 export const TYPE_LABEL: Record<string, string> = {
-  note: "Catatan",
+  note: "Note",
   journal: "Journal",
   task: "Task",
   habit: "Habit",
-  habit_log: "Centang habit",
-  transaction: "Transaksi",
+  habit_log: "Habit check",
+  transaction: "Transaction",
 };

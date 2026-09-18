@@ -59,43 +59,43 @@ function StatList({ current, previous }: { current: PeriodStats; previous: Perio
   return (
     <div>
       <Stat
-        label="Entry ditulis"
+        label="Entries written"
         value={String(current.entries)}
         current={current.entries}
         previous={previous.entries}
       />
       <Stat
-        label="Journal"
+        label="Journals"
         value={String(current.journals)}
         current={current.journals}
         previous={previous.journals}
       />
       <Stat
-        label="Hari dengan mood ≥ 4"
+        label="Days with mood ≥ 4"
         value={current.moodDays ? `${current.goodMoodDays} dari ${current.moodDays}` : "—"}
         current={current.goodMoodDays}
         previous={previous.goodMoodDays}
       />
       <Stat
-        label="Rata-rata mood"
+        label="Average mood"
         value={current.moodAverage ? current.moodAverage.toFixed(1) : "—"}
         current={current.moodAverage}
         previous={previous.moodAverage}
       />
       <Stat
-        label="Task diselesaikan"
+        label="Tasks done"
         value={String(current.tasksDone)}
         current={current.tasksDone}
         previous={previous.tasksDone}
       />
       <Stat
-        label="Centang habit"
+        label="Habit checks"
         value={String(current.habitChecks)}
         current={current.habitChecks}
         previous={previous.habitChecks}
       />
       <Stat
-        label="Pengeluaran"
+        label="Spending"
         value={current.spending === null ? "—" : formatIdr(current.spending)}
         current={current.spending}
         previous={previous.spending}
@@ -118,7 +118,7 @@ export default async function InsightPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>7 hari terakhir</CardTitle>
+          <CardTitle>Last 7 days</CardTitle>
           <CardDescription>Dibandingkan dengan 7 hari sebelumnya.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -128,7 +128,7 @@ export default async function InsightPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>30 hari terakhir</CardTitle>
+          <CardTitle>Last 30 days</CardTitle>
           <CardDescription>Dibandingkan dengan 30 hari sebelumnya.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -139,7 +139,7 @@ export default async function InsightPage() {
       {week.habitStreaks.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Streak berjalan</CardTitle>
+            <CardTitle>Streaks</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {week.habitStreaks.map((habit) => (

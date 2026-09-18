@@ -46,7 +46,7 @@ export function FinancePosition({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="size-5 text-destructive" aria-hidden />
-            Posisi belum tersedia
+            Position unavailable
           </CardTitle>
           <CardDescription>
             Endpoint <code>/api/export/snapshot</code> di finance-dashboard belum ada,
@@ -66,16 +66,16 @@ export function FinancePosition({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardDescription>Posisi bersih</CardDescription>
+          <CardDescription>Net position</CardDescription>
           <CardTitle className="text-3xl tabular-nums">{formatIdr(totals.net)}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div>
-            <Row label={`Rekening & dompet${counts ? ` (${counts.accounts})` : ""}`} value={formatIdr(totals.wallet)} />
-            <Row label={`Aset${counts ? ` (${counts.assets})` : ""}`} value={formatIdr(totals.assets)} />
-            <Row label={`Investasi${counts ? ` (${counts.investments})` : ""}`} value={formatIdr(totals.investments)} />
-            <Row label="Piutang" value={formatIdr(totals.piutang)} />
-            <Row label="Utang" value={`− ${formatIdr(totals.utang)}`} muted />
+            <Row label={`Accounts & wallets${counts ? ` (${counts.accounts})` : ""}`} value={formatIdr(totals.wallet)} />
+            <Row label={`Assets${counts ? ` (${counts.assets})` : ""}`} value={formatIdr(totals.assets)} />
+            <Row label={`Investments${counts ? ` (${counts.investments})` : ""}`} value={formatIdr(totals.investments)} />
+            <Row label="Receivables" value={formatIdr(totals.piutang)} />
+            <Row label="Debt" value={`− ${formatIdr(totals.utang)}`} muted />
           </div>
 
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -102,7 +102,7 @@ export function FinancePosition({
       {payload.monthlyExpense.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Pengeluaran per bulan</CardTitle>
+            <CardTitle>Monthly spending</CardTitle>
             <CardDescription>
               Perkiraan — batas bulannya mengikuti finance-dashboard, yang memakai
               waktu server, bukan WIB.

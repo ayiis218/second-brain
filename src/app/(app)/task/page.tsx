@@ -15,7 +15,7 @@ function field<T>(content: unknown, key: string): T | null {
 /**
  * Pengelompokan memakai dayRange()/dayKey() dari lib/time.ts — batas harinya
  * WIB. Kalau memakai perbandingan UTC, task jatuh tempo hari ini yang dibuat
- * lewat tengah malam WIB akan salah masuk grup "Terlambat".
+ * lewat tengah malam WIB akan salah masuk grup "Overdue".
  */
 function groupTasks(entries: EntryWithTags[]): TaskGroup[] {
   const { end: todayEnd } = dayRange();
@@ -51,10 +51,10 @@ function groupTasks(entries: EntryWithTags[]): TaskGroup[] {
   const byPriority = (a: TaskRow, b: TaskRow) => (rank[a.priority] ?? 1) - (rank[b.priority] ?? 1);
 
   return [
-    { key: "overdue", label: "Terlambat", tasks: overdue.sort(byPriority) },
-    { key: "today", label: "Hari ini", tasks: today.sort(byPriority) },
-    { key: "upcoming", label: "Mendatang", tasks: upcoming.sort(byPriority) },
-    { key: "undated", label: "Tanpa tanggal", tasks: undated.sort(byPriority) },
+    { key: "overdue", label: "Overdue", tasks: overdue.sort(byPriority) },
+    { key: "today", label: "Today", tasks: today.sort(byPriority) },
+    { key: "upcoming", label: "Upcoming", tasks: upcoming.sort(byPriority) },
+    { key: "undated", label: "No date", tasks: undated.sort(byPriority) },
   ].filter((group) => group.tasks.length > 0);
 }
 

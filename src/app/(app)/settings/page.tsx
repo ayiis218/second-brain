@@ -44,11 +44,11 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4">
-      <h1 className="px-1 text-lg font-semibold">Pengaturan</h1>
+      <h1 className="px-1 text-lg font-semibold">Settings</h1>
 
       <Card>
         <CardHeader>
-          <CardTitle>Akun</CardTitle>
+          <CardTitle>Account</CardTitle>
           <CardDescription>{user?.email}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -67,7 +67,7 @@ export default async function SettingsPage() {
         <CardHeader>
           <CardTitle>Export data</CardTitle>
           <CardDescription>
-            Ambil seluruh entry, tag, dan tautanmu. Data yang tidak bisa dikeluarkan
+            Ambil seluruh entri, tag, dan tautanmu. Data yang tidak bisa dikeluarkan
             membuat aplikasi ini penjara data — jadi ini bukan fitur pelengkap.
           </CardDescription>
         </CardHeader>
@@ -75,14 +75,14 @@ export default async function SettingsPage() {
           {/* Unduhan biasa, bukan server action: browser perlu respons dengan
               Content-Disposition supaya berkasnya tersimpan. */}
           <Button size="touch" variant="outline" render={<a href="/api/export" download />}>
-            Unduh JSON
+            Download JSON
           </Button>
           <Button
             size="touch"
             variant="outline"
             render={<a href="/api/export?format=md" download />}
           >
-            Unduh Markdown
+            Download Markdown
           </Button>
         </CardContent>
       </Card>

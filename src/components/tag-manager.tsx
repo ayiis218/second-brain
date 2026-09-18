@@ -44,7 +44,7 @@ export function TagManager({ tags }: { tags: TagRow[] }) {
         <CardTitle>Tag</CardTitle>
         <CardDescription>
           Mengganti nama tag ke nama yang sudah ada akan menggabungkannya.
-          Menghapus tag tidak menghapus entry-nya.
+          Menghapus tag tidak menghapus entri-nya.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -66,7 +66,7 @@ export function TagManager({ tags }: { tags: TagRow[] }) {
                       className="h-11 md:h-8"
                     />
                     <Button type="submit" size="touch" disabled={pending}>
-                      Simpan
+                      Save
                     </Button>
                   </form>
                 ) : (
@@ -83,7 +83,7 @@ export function TagManager({ tags }: { tags: TagRow[] }) {
                       type="button"
                       size="icon-touch"
                       variant="outline"
-                      aria-label={`Hapus tag ${tag.label}`}
+                      aria-label={`Delete tag ${tag.label}`}
                       disabled={pending}
                       onClick={() => onDelete(tag.id)}
                     >

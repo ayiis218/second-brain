@@ -40,7 +40,7 @@ export default async function EntryDetailPage({ params }: PageProps<"/entry/[id]
           <CardContent className="space-y-2 p-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary">{TYPE_LABEL[entry.type] ?? entry.type}</Badge>
-              <Badge variant="outline">Hasil sync — read-only</Badge>
+              <Badge variant="outline">Synced — read-only</Badge>
               <span className="ml-auto text-xs text-muted-foreground">
                 {formatDateTime(entry.occurredAt)}
               </span>

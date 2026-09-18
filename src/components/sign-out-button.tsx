@@ -32,7 +32,7 @@ export function SignOutButton() {
       onClick={onSignOut}
     >
       <LogOut className="size-4" aria-hidden />
-      {pending ? "Keluar…" : "Keluar"}
+      {pending ? "Signing out…" : "Sign out"}
     </Button>
   );
 }

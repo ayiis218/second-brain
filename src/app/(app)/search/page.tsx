@@ -23,7 +23,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
       <SearchInput defaultQuery={query} defaultType={typeFilter} />
 
       {!query ? (
-        <EmptyState>Ketik untuk mencari di seluruh catatan, journal, dan task.</EmptyState>
+        <EmptyState>Ketik untuk mencari di seluruh entri.</EmptyState>
       ) : hits.length === 0 ? (
         <EmptyState>Tidak ada yang cocok dengan “{query}”.</EmptyState>
       ) : (

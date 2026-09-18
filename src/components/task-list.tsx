@@ -51,7 +51,7 @@ function TaskItem({ task }: { task: TaskRow }) {
           type="button"
           role="checkbox"
           aria-checked={done}
-          aria-label={done ? "Tandai belum selesai" : "Tandai selesai"}
+          aria-label={done ? "Mark as not done" : "Mark as done"}
           disabled={pending}
           onClick={toggle}
           className={cn(
@@ -64,7 +64,7 @@ function TaskItem({ task }: { task: TaskRow }) {
 
         <Link href={`/entry/${task.id}`} className="min-w-0 flex-1 space-y-1">
           <p className={cn("font-medium leading-snug", done && "text-muted-foreground line-through")}>
-            {task.title || task.body || "(tanpa judul)"}
+            {task.title || task.body || "(untitled)"}
           </p>
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {task.dueLabel ? (

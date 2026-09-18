@@ -17,15 +17,15 @@ export default async function DashboardPage() {
       <TodaySummary />
       <FinanceSummaryCard />
       <QuickCapture />
-      <h2 className="px-1 text-sm font-medium text-muted-foreground">Entry terakhir</h2>
+      <h2 className="px-1 text-sm font-medium text-muted-foreground">Recent entries</h2>
       <EntryFeed
         initialEntries={entries}
         initialCursor={nextCursor}
         nativeOnly
         empty={
           <>
-            Belum ada entry. Ketuk tombol{" "}
-            <span className="font-medium text-foreground">+</span> di kanan bawah untuk menulis.
+            Belum ada entri. Ketuk tombol{" "}
+            <span className="font-medium text-foreground">+</span> di tengah bawah untuk menulis.
           </>
         }
       />

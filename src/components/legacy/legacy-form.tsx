@@ -16,6 +16,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+/**
+ * PENGECUALIAN dari aturan bahasa aplikasi (label/judul/nama = Inggris).
+ *
+ * Isi vault ini dibaca ahli waris, bukan pemilik aplikasi — orang yang mungkin
+ * baru membukanya sekali, dalam keadaan berduka, dan belum tentu membaca
+ * Inggris. Label yang harus mereka pahami tetap Bahasa Indonesia; harga dari
+ * salah paham di sini jauh lebih mahal daripada nilai keseragaman.
+ */
 const FIELDS = [
   { name: "institution", label: "Lembaga / penerbit", hint: "BRI, Bibit, BPJS Ketenagakerjaan" },
   { name: "identifier", label: "Nomor", hint: "rekening, sertifikat, polis" },

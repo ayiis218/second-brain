@@ -54,7 +54,7 @@ export function QuickCaptureForm({
 
       {/* Pemilih tipe sebagai tombol, bukan <Select>: satu ketukan alih-alih
           dua, dan pilihannya cuma tiga. */}
-      <div role="group" aria-label="Tipe entry" className="flex gap-2">
+      <div role="group" aria-label="Entry type" className="flex gap-2">
         {TYPE_OPTIONS.map((t) => (
           <Button
             key={t.value}
@@ -72,7 +72,7 @@ export function QuickCaptureForm({
 
       <div className="space-y-1.5">
         <Label htmlFor="qc-title">
-          {titleIsPrimary ? "Judul" : "Judul (opsional)"}
+          {titleIsPrimary ? "Title" : "Title (optional)"}
         </Label>
         <Input
           id="qc-title"
@@ -85,7 +85,7 @@ export function QuickCaptureForm({
 
       <div className="space-y-1.5">
         <Label htmlFor="qc-body">
-          {titleIsPrimary ? "Catatan (opsional)" : "Isi"}
+          {titleIsPrimary ? "Note (optional)" : "Body"}
         </Label>
         <Textarea
           id="qc-body"
@@ -98,13 +98,13 @@ export function QuickCaptureForm({
         />
       </div>
 
-      {/* Field berubah mengikuti tipe — form tidak seragam untuk semua entry. */}
+      {/* Field berubah mengikuti tipe — form tidak seragam untuk semua entri. */}
       <EntryFields type={type} />
 
       <TagInput suggestions={suggestedTags} />
 
       <Button type="submit" size="touch" className="w-full md:w-auto" disabled={pending}>
-        {pending ? "Menyimpan…" : "Simpan"}
+        {pending ? "Saving…" : "Save"}
       </Button>
     </form>
   );

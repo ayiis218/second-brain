@@ -64,7 +64,7 @@ export function EntryFeed({
           disabled={pending}
           onClick={loadMore}
         >
-          {pending ? "Memuat…" : "Muat lagi"}
+          {pending ? "Loading…" : "Load more"}
         </Button>
       ) : (
         <p className="py-4 text-center text-xs text-muted-foreground">Sudah sampai ujung.</p>

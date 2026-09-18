@@ -43,7 +43,7 @@ export function TrashList({ rows }: { rows: TrashRow[] }) {
           disabled={pending}
           onClick={() => run(emptyTrashAction, "Tempat sampah dikosongkan")}
         >
-          Kosongkan sekarang
+          Empty now
         </Button>
       </div>
 
@@ -69,13 +69,13 @@ export function TrashList({ rows }: { rows: TrashRow[] }) {
                 onClick={() => run(() => restoreEntryAction(row.id), "Dipulihkan")}
               >
                 <RotateCcw className="size-4" aria-hidden />
-                Pulihkan
+                Restore
               </Button>
               <Button
                 type="button"
                 size="icon-touch"
                 variant="outline"
-                aria-label="Hapus permanen"
+                aria-label="Delete permanently"
                 disabled={pending}
                 onClick={() => run(() => purgeEntryAction(row.id), "Dihapus permanen")}
               >

@@ -20,6 +20,10 @@ export type LegacyCategoryValue = (typeof LEGACY_CATEGORIES)[number];
 
 export const legacyCategorySchema = z.enum(LEGACY_CATEGORIES);
 
+/**
+ * Tetap Bahasa Indonesia — lihat alasannya di components/legacy/legacy-form.tsx:
+ * kategori ini dibaca ahli waris, bukan pemilik aplikasi.
+ */
 export const CATEGORY_LABEL: Record<LegacyCategoryValue, string> = {
   KEUANGAN: "Rekening & dompet",
   INVESTASI: "Investasi",
