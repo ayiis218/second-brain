@@ -33,7 +33,7 @@ export default async function FinancePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Sinkronisasi</CardTitle>
+          <CardTitle>Sync</CardTitle>
           <CardDescription>
             Berjalan otomatis tiap hari. Tombol ini untuk menariknya sekarang.
           </CardDescription>

@@ -22,10 +22,10 @@ export type InviteRow = {
 };
 
 function statusOf(invite: InviteRow) {
-  if (invite.usedAt) return { label: "Terpakai", variant: "secondary" as const };
-  if (invite.revokedAt) return { label: "Dicabut", variant: "outline" as const };
-  if (invite.expiresAt <= new Date()) return { label: "Kedaluwarsa", variant: "outline" as const };
-  return { label: "Aktif", variant: "default" as const };
+  if (invite.usedAt) return { label: "Used", variant: "secondary" as const };
+  if (invite.revokedAt) return { label: "Revoked", variant: "outline" as const };
+  if (invite.expiresAt <= new Date()) return { label: "Expired", variant: "outline" as const };
+  return { label: "Active", variant: "default" as const };
 }
 
 export function InviteManager({ invites }: { invites: InviteRow[] }) {
@@ -70,7 +70,7 @@ export function InviteManager({ invites }: { invites: InviteRow[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Undangan</CardTitle>
+        <CardTitle>Invites</CardTitle>
         <CardDescription>
           Pendaftaran hanya lewat tautan undangan. Tautan berlaku 14 hari dan sekali pakai.
         </CardDescription>
@@ -78,7 +78,7 @@ export function InviteManager({ invites }: { invites: InviteRow[] }) {
       <CardContent className="space-y-4">
         <form action={onCreate} className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="invite-email">Kunci ke email (opsional)</Label>
+            <Label htmlFor="invite-email">Lock to email (optional)</Label>
             <Input
               id="invite-email"
               name="email"
@@ -89,7 +89,7 @@ export function InviteManager({ invites }: { invites: InviteRow[] }) {
             />
           </div>
           <Button type="submit" size="touch" disabled={pending} className="w-full md:w-auto">
-            Buat undangan
+            Create invite
           </Button>
         </form>
 
@@ -99,7 +99,7 @@ export function InviteManager({ invites }: { invites: InviteRow[] }) {
           <ul className="space-y-3">
             {invites.map((invite) => {
               const status = statusOf(invite);
-              const active = status.label === "Aktif";
+              const active = status.label === "Active";
               return (
                 <li key={invite.id} className="space-y-2 rounded-lg border p-3 text-sm">
                   <div className="flex items-center gap-2">
@@ -122,13 +122,13 @@ export function InviteManager({ invites }: { invites: InviteRow[] }) {
                         ) : (
                           <Copy className="size-4" aria-hidden />
                         )}
-                        Salin tautan
+                        Copy link
                       </Button>
                       <Button
                         type="button"
                         size="icon-touch"
                         variant="outline"
-                        aria-label="Cabut undangan"
+                        aria-label="Revoke invite"
                         disabled={pending}
                         onClick={() => onRevoke(invite.id)}
                       >

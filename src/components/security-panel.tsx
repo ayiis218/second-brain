@@ -29,7 +29,7 @@ export function SecurityPanel({ devices }: { devices: DeviceRow[] }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShieldAlert className="size-4" aria-hidden />
-          Keamanan akses
+          Access security
         </CardTitle>
         <CardDescription>
           Kalau HP hilang atau ada yang membuka aplikasimu, keluarkan semua
@@ -41,7 +41,7 @@ export function SecurityPanel({ devices }: { devices: DeviceRow[] }) {
       <CardContent className="space-y-4">
         {devices.length > 0 ? (
           <div className="space-y-1.5">
-            <p className="text-sm font-medium">Perangkat yang pernah dipakai</p>
+            <p className="text-sm font-medium">Known devices</p>
             <ul className="space-y-1 text-sm text-muted-foreground">
               {devices.map((d) => (
                 <li key={d.id} className="flex items-center gap-2">
@@ -69,7 +69,7 @@ export function SecurityPanel({ devices }: { devices: DeviceRow[] }) {
                 disabled={pending}
                 onClick={onRevoke}
               >
-                {pending ? "Mencabut…" : "Ya, keluarkan semua"}
+                {pending ? "Signing out…" : "Yes, sign out all"}
               </Button>
               <Button
                 type="button"
@@ -78,7 +78,7 @@ export function SecurityPanel({ devices }: { devices: DeviceRow[] }) {
                 className="flex-1"
                 onClick={() => setConfirming(false)}
               >
-                Batal
+                Cancel
               </Button>
             </div>
           </div>
@@ -91,7 +91,7 @@ export function SecurityPanel({ devices }: { devices: DeviceRow[] }) {
             onClick={() => setConfirming(true)}
           >
             <LogOut className="size-4" aria-hidden />
-            Keluar dari semua perangkat
+            Sign out all devices
           </Button>
         )}
       </CardContent>

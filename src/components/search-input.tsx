@@ -45,8 +45,8 @@ export function SearchInput({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         type="search"
-        placeholder="Cari catatan, journal, task…"
-        aria-label="Kata kunci pencarian"
+        placeholder="Search titles and content…"
+        aria-label="Search query"
         className="h-11 md:h-9"
       />
       <div className="flex flex-wrap gap-2">

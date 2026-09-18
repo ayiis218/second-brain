@@ -17,7 +17,7 @@ export function ShareCapture({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Catatan baru</CardTitle>
+        <CardTitle>New note</CardTitle>
         <CardDescription>
           Isinya sudah diisi dari aplikasi asal. Ubah seperlunya sebelum disimpan.
         </CardDescription>

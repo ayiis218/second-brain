@@ -43,7 +43,7 @@ export function TimelineMore({
       {entries.length > 0 ? (
         <section className="space-y-3">
           <h2 className="px-1 text-xs font-medium text-muted-foreground">
-            Lebih lama — sejak {formatDayLabel(entries[0].occurredAt)}
+            Older — since {formatDayLabel(entries[0].occurredAt)}
           </h2>
           {entries.map((entry, i) => (
             <EntryCard key={entry.id} entry={entry} index={i} />
@@ -60,7 +60,7 @@ export function TimelineMore({
           disabled={pending}
           onClick={loadMore}
         >
-          {pending ? "Memuat…" : "Muat lagi"}
+          {pending ? "Loading…" : "Load more"}
         </Button>
       ) : (
         <p className="py-2 text-center text-xs text-muted-foreground">Sudah sampai ujung.</p>

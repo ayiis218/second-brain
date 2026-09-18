@@ -19,9 +19,13 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#F5F9FC",
     theme_color: "#F5F9FC",
     categories: ["productivity", "lifestyle"],
+    // `any` dan `maskable` sengaja berkas berbeda. Ikon maskable dipotong
+    // Android jadi lingkaran/squircle, jadi gambarnya butuh ruang aman ekstra;
+    // memakai satu berkas untuk keduanya membuat salah satunya salah — entah
+    // terpotong di home screen, atau kekecilan di tempat yang tidak memotong.
     icons: [
       { src: "/icon", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/icon", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/icon-maskable", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     // Tidak ada di tipe MetadataRoute.Manifest bawaan Next, tapi sah menurut
     // spesifikasi Web Share Target.

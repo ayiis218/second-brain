@@ -101,8 +101,8 @@ export function EntryList({ entries }: { entries: EntryWithTags[] }) {
   if (entries.length === 0) {
     return (
       <EmptyState>
-        Belum ada entry. Ketuk tombol{" "}
-        <span className="font-medium text-foreground">+</span> di kanan bawah untuk menulis.
+        Belum ada entri. Ketuk tombol{" "}
+        <span className="font-medium text-foreground">+</span> di tengah bawah untuk menulis.
       </EmptyState>
     );
   }

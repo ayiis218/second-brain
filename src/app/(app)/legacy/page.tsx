@@ -22,7 +22,7 @@ export default async function LegacyPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="size-5" aria-hidden />
-              Vault belum bisa dipakai
+              Vault unavailable
             </CardTitle>
             <CardDescription>
               <code>LEGACY_MASTER_KEY</code> belum diset. Generate dengan{" "}

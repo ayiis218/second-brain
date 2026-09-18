@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const CONFIRM_WORD = "HAPUS";
+const CONFIRM_WORD = "DELETE";
 
 export function DeleteAccount() {
   const [confirmation, setConfirmation] = useState("");
@@ -29,10 +29,10 @@ export function DeleteAccount() {
   return (
     <Card className="border-destructive/40">
       <CardHeader>
-        <CardTitle className="text-destructive">Hapus akun</CardTitle>
+        <CardTitle className="text-destructive">Delete account</CardTitle>
         <CardDescription>
-          Seluruh entry, tag, dan tautanmu ikut terhapus permanen. Tindakan ini tidak
-          bisa dibatalkan — ambil export lebih dulu kalau datanya masih dibutuhkan.
+          Seluruh entri, tag, dan tautanmu ikut terhapus permanen. Tindakan ini tidak
+          bisa dibatalkan — ambil ekspor lebih dulu kalau datanya masih dibutuhkan.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -56,7 +56,7 @@ export function DeleteAccount() {
           disabled={!armed || pending}
           onClick={onDelete}
         >
-          {pending ? "Menghapus…" : "Hapus akun saya"}
+          {pending ? "Deleting…" : "Delete my account"}
         </Button>
       </CardContent>
     </Card>

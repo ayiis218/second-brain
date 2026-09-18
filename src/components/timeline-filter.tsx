@@ -4,13 +4,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 
+// Nama filter mengikuti TYPE_LABEL — sama persis dengan nama menu, supaya
+// chip di sini dan badge di kartu entry tidak terbaca sebagai dua hal beda.
 const FILTERS = [
-  { value: "", label: "Semua" },
-  { value: "note", label: "Catatan" },
+  { value: "", label: "All" },
+  { value: "note", label: "Note" },
   { value: "journal", label: "Journal" },
   { value: "task", label: "Task" },
   { value: "habit", label: "Habit" },
-  { value: "transaction", label: "Transaksi" },
+  { value: "transaction", label: "Transaction" },
 ] as const;
 
 /**

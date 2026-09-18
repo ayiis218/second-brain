@@ -17,7 +17,7 @@ export default async function InvitePage({ params }: PageProps<"/invite/[code]">
       <div className="flex min-h-svh items-center justify-center p-4">
         <Card className="w-full max-w-sm">
           <CardHeader>
-            <CardTitle>Undangan tidak berlaku</CardTitle>
+            <CardTitle>Invite invalid</CardTitle>
             <CardDescription>
               Tautan ini sudah dipakai, dicabut, atau kedaluwarsa. Minta tautan baru
               kepada yang mengundangmu.
@@ -35,7 +35,7 @@ export default async function InvitePage({ params }: PageProps<"/invite/[code]">
           <BrainCircuit className="size-10 text-white" aria-hidden />
         </div>
         <CardHeader>
-          <CardTitle>Kamu diundang</CardTitle>
+          <CardTitle>You&apos;re invited</CardTitle>
           <CardDescription>
             {invite.email
               ? `Undangan ini khusus untuk ${invite.email}. Masuk dengan akun Google tersebut.`
@@ -66,7 +66,7 @@ export default async function InvitePage({ params }: PageProps<"/invite/[code]">
             }}
           >
             <Button type="submit" size="touch" className="w-full">
-              Lanjut dengan Google
+              Continue with Google
             </Button>
           </form>
         </CardContent>

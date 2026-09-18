@@ -22,7 +22,7 @@ export function SyncButton() {
         }).format(Number(payload.totals.net));
         toast.success(`Posisi diperbarui — ${net}`);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Sync gagal");
+        toast.error(error instanceof Error ? error.message : "Sinkronisasi gagal");
       }
     });
   }
@@ -37,7 +37,7 @@ export function SyncButton() {
       onClick={onSync}
     >
       <RefreshCw className={cn("size-4", pending && "animate-spin")} aria-hidden />
-      {pending ? "Menyinkronkan…" : "Sync sekarang"}
+      {pending ? "Syncing…" : "Sync now"}
     </Button>
   );
 }

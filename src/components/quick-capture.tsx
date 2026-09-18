@@ -2,9 +2,9 @@ import { QuickCaptureForm } from "@/components/quick-capture-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /**
- * Quick capture versi desktop: kartu inline di atas daftar.
+ * Tulis cepat versi desktop: kartu inline di atas daftar.
  * Di mobile, form yang sama dibuka lewat FAB + bottom sheet (compose-sheet.tsx)
- * supaya daftar entry tidak terdorong turun oleh form yang jarang dipakai
+ * supaya daftar entri tidak terdorong turun oleh form yang jarang dipakai
  * sekaligus, dan tombol tulisnya tetap dalam jangkauan ibu jari.
  */
 export function QuickCapture() {

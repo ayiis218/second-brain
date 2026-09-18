@@ -20,7 +20,12 @@ export default async function SharePage({ searchParams }: PageProps<"/share">) {
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4">
-      <h1 className="px-1 text-lg font-semibold">Simpan dari aplikasi lain</h1>
+      <div className="px-1">
+        <h1 className="text-lg font-semibold">Share</h1>
+        <p className="text-sm text-muted-foreground">
+          Simpan yang kamu bagikan dari aplikasi lain.
+        </p>
+      </div>
       <ShareCapture defaultTitle={pick(title)} defaultBody={body} />
     </div>
   );

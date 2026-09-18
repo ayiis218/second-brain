@@ -74,10 +74,10 @@ export function EntryLinks({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Link2 className="size-4" aria-hidden />
-          Tautan
+          Links
         </CardTitle>
         <CardDescription>
-          Hubungkan entry ini dengan yang lain — misalnya journal dengan transaksi
+          Hubungkan entri ini dengan yang lain — misalnya journal dengan transaksi
           yang memicunya.
         </CardDescription>
       </CardHeader>
@@ -88,13 +88,13 @@ export function EntryLinks({
               <li key={linkId} className="flex items-center gap-2 rounded-lg border p-2 text-sm">
                 <Badge variant="secondary">{TYPE_LABEL[other.type] ?? other.type}</Badge>
                 <Link href={`/entry/${other.id}`} className="min-w-0 flex-1 truncate">
-                  {other.title || "(tanpa judul)"}
+                  {other.title || "(untitled)"}
                 </Link>
                 <Button
                   type="button"
                   size="icon-touch"
                   variant="ghost"
-                  aria-label="Lepas tautan"
+                  aria-label="Unlink"
                   disabled={pending}
                   onClick={() => onUnlink(linkId)}
                 >
@@ -108,8 +108,8 @@ export function EntryLinks({
         <Input
           value={query}
           onChange={(e) => onSearch(e.target.value)}
-          placeholder="Cari entry untuk ditautkan…"
-          aria-label="Cari entry untuk ditautkan"
+          placeholder="Search entries to link…"
+          aria-label="Search entries to link"
           className="h-11 md:h-8"
         />
 
@@ -128,7 +128,7 @@ export function EntryLinks({
                   <Badge variant="secondary">
                     {TYPE_LABEL[candidate.type] ?? candidate.type}
                   </Badge>
-                  <span className="truncate">{candidate.title || "(tanpa judul)"}</span>
+                  <span className="truncate">{candidate.title || "(untitled)"}</span>
                 </Button>
               </li>
             ))}

@@ -40,7 +40,7 @@ export default async function TimelinePage({ searchParams }: PageProps<"/timelin
       <TimelineFilter />
 
       {groups.length === 0 ? (
-        <EmptyState>Belum ada entry untuk ditampilkan.</EmptyState>
+        <EmptyState>Belum ada entri untuk ditampilkan.</EmptyState>
       ) : (
         groups.map(([key, group]) => (
           <section key={key} className="space-y-3">

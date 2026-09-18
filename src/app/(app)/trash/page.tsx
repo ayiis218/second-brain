@@ -27,9 +27,9 @@ export default async function TrashPage() {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4">
       <div className="space-y-1 px-1">
-        <h1 className="text-lg font-semibold">Tempat sampah</h1>
+        <h1 className="text-lg font-semibold">Trash</h1>
         <p className="text-xs text-muted-foreground">
-          Entry di sini dihapus otomatis setelah 30 hari.
+          Entri di sini dihapus otomatis setelah 30 hari.
         </p>
       </div>
 

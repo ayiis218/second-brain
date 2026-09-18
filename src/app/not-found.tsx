@@ -8,14 +8,14 @@ export default function NotFound() {
     <div className="flex min-h-svh items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Tidak ditemukan</CardTitle>
+          <CardTitle>Not found</CardTitle>
           <CardDescription>
-            Halaman atau entry ini tidak ada — atau bukan milikmu.
+            Halaman atau entri ini tidak ada — atau bukan milikmu.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button size="touch" className="w-full" render={<Link href="/" />}>
-            Kembali ke beranda
+            Back to Home
           </Button>
         </CardContent>
       </Card>

@@ -20,7 +20,7 @@ export default function AppError({
     <div className="mx-auto w-full max-w-2xl">
       <Card className="border-destructive/40">
         <CardHeader>
-          <CardTitle>Ada yang salah</CardTitle>
+          <CardTitle>Something went wrong</CardTitle>
           <CardDescription>
             Halaman ini gagal dimuat. Datamu tidak terpengaruh.
           </CardDescription>
@@ -30,7 +30,7 @@ export default function AppError({
             <p className="font-mono text-xs text-muted-foreground">ref: {error.digest}</p>
           ) : null}
           <Button size="touch" onClick={reset} className="w-full md:w-auto">
-            Coba lagi
+            Try again
           </Button>
         </CardContent>
       </Card>
