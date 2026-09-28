@@ -27,7 +27,14 @@ const GATES = [
   {
     name: "prisma.entry di luar repository",
     pattern: /\bprisma\.entry\b/,
-    allow: ["src/lib/entries/repository/", "src/lib/entries/sync-repository.ts"],
+    allow: [
+      "src/lib/entries/repository/",
+      "src/lib/entries/sync-repository.ts",
+      // Retensi trash: hard-delete lintas-user, bukan tulis per-owner —
+      // lihat komentar di berkasnya sendiri soal kenapa ini beda dari
+      // sync-repository.ts.
+      "src/lib/entries/trash-retention.ts",
+    ],
     hint: "Pakai fungsi dari src/lib/entries/repository/ supaya content tervalidasi Zod.",
   },
   {
@@ -92,6 +99,10 @@ const GATES = [
       // ketat, bukan lebih longgar: modul ini khusus pemilik. Aturan
       // penggantinya diperiksa gerbang "query tanpa penyaring pemilik".
       "src/lib/legacy/repository.ts",
+      // Retensi trash berjalan tanpa sesi dan sengaja lintas-user — tidak
+      // ada userId tunggal untuk disaring. Lihat SYSTEM_PATHS di bawah:
+      // berkas ini SENGAJA tidak didaftarkan di sana.
+      "src/lib/entries/trash-retention.ts",
     ],
     hint: "Client Prisma mentah melewati penyaring userId. Pakai scopedDb() atau fungsi repository.",
   },
@@ -114,6 +125,16 @@ const RAW_QUERY_GATE = {
  * Jalur SISTEM: berkas yang berjalan tanpa sesi (cron sync), sehingga
  * scopedDb() tidak bisa dipakai dan extension tidak menyuntik apa pun.
  * Sebagai gantinya, setiap query di sana wajib menyebut `ownerId`.
+ */
+/**
+ * `src/lib/entries/trash-retention.ts` SENGAJA tidak ada di sini.
+ *
+ * Aturan "setiap query wajib menyebut ownerId" dibuat untuk jalur sistem
+ * yang menulis data MILIK SATU owner (sync finance). Retensi trash
+ * sebaliknya: kebijakan yang berlaku sama untuk SELURUH user sekaligus,
+ * jadi query tanpa userId di sana bukan celah — itu memang desainnya.
+ * Jangan tambahkan berkas itu ke sini tanpa mengubah juga apa yang
+ * query-nya lakukan.
  */
 const SYSTEM_PATHS = [
   { path: "src/lib/entries/sync-repository.ts", token: "ownerId" },
