@@ -60,6 +60,20 @@ Tiga hal yang menjaga kebenarannya:
 
 Sync berjalan tanpa sesi, jadi `scopedDb()` tidak bisa dipakai. Jalur sistemnya dipisah ke `src/lib/entries/sync-repository.ts` dengan aturan pengganti: **setiap query di sana wajib menyebut `ownerId`**, dijaga gerbang `jalur sistem tanpa ownerId`.
 
+## Purge trash otomatis
+
+Entry yang di-soft-delete lebih dari 30 hari dihapus permanen otomatis — janji yang ditulis di halaman `/trash`. Berlaku untuk **semua user sekaligus**, bukan cuma satu.
+
+```bash
+# jalankan manual
+curl -H "Authorization: Bearer $CRON_SECRET" localhost:3001/api/cron/purge-trash
+# atau tombol "Kosongkan sekarang" di /trash (langsung, tanpa menunggu 30 hari — hanya untuk user itu sendiri)
+```
+
+Cron dijadwalkan harian di `vercel.json`, jam berbeda dari sync finance supaya tidak bertumpuk.
+
+Berjalan tanpa sesi seperti sync finance, tapi dengan bentuk aturan yang berbeda: sync menulis data milik **satu** owner, jadi setiap querynya wajib menyebut `ownerId`. Purge trash sebaliknya — kebijakan retensi yang sama untuk **seluruh** user, jadi query-nya (`src/lib/entries/trash-retention.ts`) sengaja TIDAK menyebut userId sama sekali dan sengaja tidak didaftarkan di gerbang `ownerId` tadi. Ini bukan celah isolasi data: operasinya tidak membaca atau mengembalikan isi baris siapa pun, hanya membuang yang sudah ditandai terhapus.
+
 ## Habit, Insight, dan PWA (Fase 4)
 
 **Habit** disimpan sebagai entry `habit` (namanya di `title`), centangnya sebagai entry `habit_log` ber-`dayKey` WIB. Aturan "satu centang per hari" ditegakkan **unique index parsial** di database, bukan hanya kode — dua ketukan beruntun di mobile tidak bisa sama-sama lolos.
