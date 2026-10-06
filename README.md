@@ -60,6 +60,34 @@ Tiga hal yang menjaga kebenarannya:
 
 Sync berjalan tanpa sesi, jadi `scopedDb()` tidak bisa dipakai. Jalur sistemnya dipisah ke `src/lib/entries/sync-repository.ts` dengan aturan pengganti: **setiap query di sana wajib menyebut `ownerId`**, dijaga gerbang `jalur sistem tanpa ownerId`.
 
+## Purge trash otomatis
+
+Entry yang di-soft-delete lebih dari 30 hari dihapus permanen otomatis — janji yang ditulis di halaman `/trash`. Berlaku untuk **semua user sekaligus**, bukan cuma satu.
+
+```bash
+# jalankan manual
+curl -H "Authorization: Bearer $CRON_SECRET" localhost:3001/api/cron/purge-trash
+# atau tombol "Kosongkan sekarang" di /trash (langsung, tanpa menunggu 30 hari — hanya untuk user itu sendiri)
+```
+
+Cron dijadwalkan harian di `vercel.json`, jam berbeda dari sync finance supaya tidak bertumpuk.
+
+Berjalan tanpa sesi seperti sync finance, tapi dengan bentuk aturan yang berbeda: sync menulis data milik **satu** owner, jadi setiap querynya wajib menyebut `ownerId`. Purge trash sebaliknya — kebijakan retensi yang sama untuk **seluruh** user, jadi query-nya (`src/lib/entries/trash-retention.ts`) sengaja TIDAK menyebut userId sama sekali dan sengaja tidak didaftarkan di gerbang `ownerId` tadi. Ini bukan celah isolasi data: operasinya tidak membaca atau mengembalikan isi baris siapa pun, hanya membuang yang sudah ditandai terhapus.
+
+## Legacy Vault sebagai produk berdiri sendiri
+
+Modul Legacy (vault estate planning terenkripsi) bisa dipakai siapa pun yang mendaftar lewat `/vault` — **tanpa** undangan Second Brain, dan tanpa melihat Task/Journal/Habit/dll yang bukan bagian dari produk itu. Satu repo, satu database, satu deployment yang sama; yang berbeda cuma jalur pendaftaran dan nav yang ditampilkan.
+
+- **Akses**: `LegacyAccess` (per-user) menggantikan "satu `OWNER_EMAIL`" sebagai penjaga modul ini — lihat `src/lib/legacy/access.ts`. Pemilik aplikasi digrandfather otomatis, tidak pernah butuh baris di tabel ini.
+- **Pendaftaran**: `/vault` men-set cookie niat (`VAULT_INTENT_COOKIE`, pola sama dengan `INVITE_COOKIE`), divalidasi ulang di `signIn` callback (`src/auth.ts`) sebelum user dibuat. `createUser` event lalu memberi masa coba 14 hari lewat `startVaultTrial()` dan menandai `User.signupSource = "vault"`.
+- **Nav**: `User.signupSource` menentukan audience (`"full"` vs `"vault-only"`) di `src/lib/auth-user.ts` (`getNavAudience()`) — pelanggan vault-only hanya melihat Legacy + Settings (`src/components/layout/nav-items.ts`).
+- **Lampiran** (`LegacyAttachment`): byte berkas dienkripsi per-lampiran (`sealBytes`/`openBytes` di `legacy/crypto.ts`, mekanisme sama dengan isi item) lalu disimpan ke **Vercel Blob privat** (`legacy/blob-storage.ts`); yang ada di Postgres cuma metadata (iv/authTag/wrappedKey/mimeType/sizeBytes) dan referensi objek. Diunduh lewat `/api/legacy/attachments/[id]`, bukan server action — butuh respons biner dengan header `Content-Type`.
+
+**Belum aktif — langkah manual yang masih perlu dilakukan sebelum fitur ini bisa dipakai sungguhan:**
+
+1. **Pembayaran.** Saat ini hanya masa coba 14 hari, tidak ada yang menagih setelahnya. Pilih provider lewat `/marketplace` — jangan pasang SDK provider apa pun tanpa lewat jalur itu.
+2. **Vercel Blob.** Perlu store privat ter-provisioning (`vercel link` lalu `vercel blob create-store <nama> --access private`, lalu `vercel env pull .env.local`). Tanpa `BLOB_READ_WRITE_TOKEN`/`BLOB_STORE_ID`, upload/unduh lampiran akan gagal — isi vault yang lain (item tanpa lampiran) tidak terpengaruh.
+
 ## Habit, Insight, dan PWA (Fase 4)
 
 **Habit** disimpan sebagai entry `habit` (namanya di `title`), centangnya sebagai entry `habit_log` ber-`dayKey` WIB. Aturan "satu centang per hari" ditegakkan **unique index parsial** di database, bukan hanya kode — dua ketukan beruntun di mobile tidak bisa sama-sama lolos.
@@ -107,6 +135,8 @@ Port `3001` dipakai supaya bisa jalan berdampingan dengan `finance-dashboard` di
 | `OWNER_EMAIL` | Penanda pemilik: hanya dia yang melihat modul Finance dan bisa membuat undangan. Bukan pemblokir login. |
 | `FINANCE_API_URL` / `FINANCE_SYNC_TOKEN` | Endpoint export finance-dashboard. Tokennya harus sama dengan `SYNC_TOKEN` di sana. |
 | `CRON_SECRET` | Melindungi `/api/cron/*`, yang dikecualikan dari proxy auth karena dipanggil mesin. |
+| `LEGACY_MASTER_KEY` | `openssl rand -base64 32`. Tanpa ini modul Legacy menolak menulis apa pun — lihat `legacy/crypto.ts`. |
+| `BLOB_READ_WRITE_TOKEN` / `BLOB_STORE_ID` | Lampiran vault (§Legacy Vault di atas). Diisi otomatis oleh `vercel env pull` setelah store privat dibuat — jangan diisi manual. |
 
 ### Migrasi
 

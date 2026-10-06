@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { visibleNavItems } from "@/components/layout/nav-items";
+import { visibleNavItems, type NavAccess } from "@/components/layout/nav-items";
 import {
   Sidebar,
   SidebarContent,
@@ -16,12 +16,12 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-export function AppSidebar({ isOwner }: { isOwner: boolean }) {
+export function AppSidebar({ nav }: { nav: NavAccess }) {
   const pathname = usePathname();
   // Daftar menu dirakit di sini, bukan diterima sebagai prop: NavItem
   // memuat komponen ikon, dan komponen tidak bisa diserialisasi dari
   // Server Component ke Client Component.
-  const items = visibleNavItems(isOwner);
+  const items = visibleNavItems(nav);
 
   return (
     <Sidebar>
@@ -29,7 +29,7 @@ export function AppSidebar({ isOwner }: { isOwner: boolean }) {
         {/* bg-brand-soft, bukan bg-brand-gradient: ujung terang gradasi penuh
             tidak cukup kontras untuk teks kecil. */}
         <div className="bg-brand-soft rounded-lg px-3 py-2.5 text-sm font-semibold text-foreground">
-          Second Brain
+          {nav.audience === "vault-only" ? "Legacy Vault" : "Second Brain"}
         </div>
       </SidebarHeader>
       <SidebarContent>

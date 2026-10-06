@@ -16,6 +16,7 @@ type ValidatedSession = {
   email: string | null;
   name: string | null;
   image: string | null;
+  signupSource: string;
 };
 
 /**
@@ -47,7 +48,7 @@ const validatedSession = cache(async (): Promise<ValidatedSession | null> => {
   const user = id
     ? await prisma.user.findUnique({
         where: { id },
-        select: { id: true, email: true, sessionsValidAfter: true },
+        select: { id: true, email: true, sessionsValidAfter: true, signupSource: true },
       })
     : null;
 
@@ -56,7 +57,7 @@ const validatedSession = cache(async (): Promise<ValidatedSession | null> => {
     (email
       ? await prisma.user.findUnique({
           where: { email },
-          select: { id: true, email: true, sessionsValidAfter: true },
+          select: { id: true, email: true, sessionsValidAfter: true, signupSource: true },
         })
       : null);
 
@@ -76,6 +77,7 @@ const validatedSession = cache(async (): Promise<ValidatedSession | null> => {
     email: resolved.email,
     name: name ?? null,
     image: image ?? null,
+    signupSource: resolved.signupSource,
   };
 });
 
@@ -109,6 +111,24 @@ export async function isOwner(): Promise<boolean> {
   if (!OWNER_EMAIL) return false;
   const session = await validatedSession();
   return session?.email?.trim().toLowerCase() === OWNER_EMAIL;
+}
+
+export type NavAudience = "full" | "vault-only";
+
+/**
+ * "full" = seluruh Second Brain. "vault-only" = pelanggan yang mendaftar
+ * lewat /vault (lihat User.signupSource) — mereka tidak pernah diundang ke
+ * Second Brain, jadi Task/Journal/Habit/dll bukan bagian dari produk yang
+ * mereka beli, walau secara teknis modul-modul itu tidak dikunci untuk
+ * mereka (lihat nav-items.ts).
+ *
+ * Pemilik SELALU "full", apa pun signupSource-nya — perannya tidak boleh
+ * bergantung pada jalur pendaftaran yang kebetulan ia pakai pertama kali.
+ */
+export async function getNavAudience(): Promise<NavAudience> {
+  if (await isOwner()) return "full";
+  const session = await validatedSession();
+  return session?.signupSource === "vault" ? "vault-only" : "full";
 }
 
 /**

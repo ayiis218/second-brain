@@ -5,6 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 
 import { prisma } from "@/lib/prisma";
 import { INVITE_COOKIE, attachInviteUser, consumeInvite } from "@/lib/invites";
+import { VAULT_INTENT_COOKIE, startVaultTrial } from "@/lib/legacy/access";
 import { recordSignIn } from "@/lib/security/devices";
 
 /**
@@ -39,7 +40,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (existing) return true;
 
       // Mulai dari sini: pendaftaran user baru.
-      const code = (await cookies()).get(INVITE_COOKIE)?.value;
+
+      // Jalur produk Legacy Vault: pendaftaran tanpa undangan Second Brain,
+      // ditandai cookie niat dari /vault. Diperiksa SEBELUM syarat undangan
+      // di bawah supaya pengunjung /vault tidak ikut terjegal "invite_required".
+      const jar = await cookies();
+      if (jar.get(VAULT_INTENT_COOKIE)?.value === "1") return true;
+
+      const code = jar.get(INVITE_COOKIE)?.value;
       if (!code) return "/login?error=invite_required";
 
       // Validasi ULANG di sisi server. Cookie berasal dari klien dan tidak
@@ -80,9 +88,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
      * adapter belum membuat baris user-nya.
      */
     async createUser({ user }) {
+      if (!user.id) return;
       const jar = await cookies();
+
+      if (jar.get(VAULT_INTENT_COOKIE)?.value === "1") {
+        // signupSource ditulis langsung lewat prisma di sini (bukan lewat
+        // fungsi repository): adapter sudah membuat baris User-nya, dan ini
+        // satu-satunya saat aplikasi tahu "kenapa" user ini ada, sebelum ada
+        // sesi untuk dipakai scopedDb().
+        await prisma.user.update({ where: { id: user.id }, data: { signupSource: "vault" } });
+        await startVaultTrial(user.id);
+        return;
+      }
+
       const code = jar.get(INVITE_COOKIE)?.value;
-      if (code && user.id) {
+      if (code) {
         await attachInviteUser(code, user.id);
       }
     },

@@ -3,11 +3,16 @@
 import { revalidatePath } from "next/cache";
 
 import {
+  createAttachment,
   createLegacyItem,
+  deleteAttachment,
   deleteLegacyItem,
   updateLegacyItem,
 } from "./repository";
 import { legacyCategorySchema } from "./schemas";
+
+/** Dicocokkan juga di UI (legacy-vault.tsx) — satu tempat ganti kalau angkanya berubah. */
+export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 /**
  * Action vault. Seluruh pemeriksaan kepemilikan ada di repository — kalau
@@ -47,5 +52,29 @@ export async function updateLegacyItemAction(id: string, formData: FormData) {
 
 export async function deleteLegacyItemAction(id: string) {
   await deleteLegacyItem(id);
+  revalidatePath("/legacy");
+}
+
+// --- Lampiran -----------------------------------------------------------
+
+export async function uploadLegacyAttachmentAction(itemId: string, formData: FormData) {
+  const file = formData.get("file");
+  if (!(file instanceof File)) throw new Error("Tidak ada berkas yang dikirim.");
+  if (file.size === 0) throw new Error("Berkas kosong.");
+  if (file.size > MAX_ATTACHMENT_BYTES) {
+    throw new Error(`Berkas maksimal ${MAX_ATTACHMENT_BYTES / 1024 / 1024}MB.`);
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await createAttachment(itemId, {
+    buffer,
+    mimeType: file.type || "application/octet-stream",
+  });
+  revalidatePath("/legacy");
+}
+
+export async function deleteLegacyAttachmentAction(attachmentId: string) {
+  const changed = await deleteAttachment(attachmentId);
+  if (changed === 0) throw new Error("Lampiran tidak ditemukan.");
   revalidatePath("/legacy");
 }

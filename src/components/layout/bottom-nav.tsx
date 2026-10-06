@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { ComposeSheet } from "@/components/entries/compose-sheet";
-import { mobileNavItems } from "@/components/layout/nav-items";
+import { mobileNavItems, type NavAccess } from "@/components/layout/nav-items";
 import { cn } from "@/lib/utils";
 
 /**
@@ -18,10 +18,18 @@ import { cn } from "@/lib/utils";
  * menutupi isi daftar dan tidak terbaca sebagai bagian dari navigasi.
  *
  * Sidebar mengambil alih di >= md.
+ *
+ * Tidak render apa pun kalau tidak ada menu yang relevan — pelanggan
+ * Legacy Vault (audience "vault-only") tidak punya satu pun href di
+ * MOBILE_HREFS, dan tombol tulis di tengah toh untuk membuat entri Second
+ * Brain (note/journal/task/habit) yang bukan bagian dari produk mereka.
+ * Navigasi mereka cukup lewat sheet menu di header.
  */
-export function BottomNav({ isOwner }: { isOwner: boolean }) {
+export function BottomNav({ nav }: { nav: NavAccess }) {
   const pathname = usePathname();
-  const items = mobileNavItems(isOwner);
+  const items = mobileNavItems(nav);
+
+  if (items.length === 0) return null;
 
   // Dibelah tepat di tengah supaya tombol tulis duduk di sumbu layar; dengan
   // jumlah item ganjil salah satu sisi akan lebih berat dan tombolnya
