@@ -17,8 +17,10 @@ export type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  /** Hanya tampil untuk pemilik — mis. Finance (Fase 3), Legacy (Fase 5). */
+  /** Hanya tampil untuk pemilik — khusus Finance, yang memang tidak pernah dijual. */
   ownerOnly?: boolean;
+  /** Tampil untuk pemilik ATAU siapa pun dengan entitlement vault (lihat lib/legacy/access.ts). */
+  requiresVaultAccess?: boolean;
 };
 
 /**
@@ -38,7 +40,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/search", label: "Search", icon: Search },
   { href: "/timeline", label: "Timeline", icon: CalendarClock },
   { href: "/finance", label: "Finance", icon: Wallet, ownerOnly: true },
-  { href: "/legacy", label: "Legacy", icon: ShieldCheck, ownerOnly: true },
+  { href: "/legacy", label: "Legacy", icon: ShieldCheck, requiresVaultAccess: true },
   { href: "/trash", label: "Trash", icon: Trash2 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -54,10 +56,31 @@ export const NAV_ITEMS: NavItem[] = [
  */
 const MOBILE_HREFS = ["/", "/task", "/journal", "/habit"];
 
-export function visibleNavItems(isOwner: boolean) {
-  return NAV_ITEMS.filter((item) => !item.ownerOnly || isOwner);
+/**
+ * Pelanggan Legacy Vault yang mendaftar lewat /vault hanya melihat produk
+ * yang mereka beli — bukan seluruh Second Brain. Daftar ini, bukan daftar
+ * MOBILE_HREFS, yang menentukan menu mana yang relevan untuk mereka.
+ */
+const VAULT_ONLY_HREFS = ["/legacy", "/settings"];
+
+export type NavAccess = {
+  isOwner: boolean;
+  hasVaultAccess: boolean;
+  audience: "full" | "vault-only";
+};
+
+export function visibleNavItems(access: NavAccess): NavItem[] {
+  const entitled = NAV_ITEMS.filter((item) => {
+    if (item.ownerOnly && !access.isOwner) return false;
+    if (item.requiresVaultAccess && !access.isOwner && !access.hasVaultAccess) return false;
+    return true;
+  });
+
+  return access.audience === "vault-only"
+    ? entitled.filter((item) => VAULT_ONLY_HREFS.includes(item.href))
+    : entitled;
 }
 
-export function mobileNavItems(isOwner: boolean) {
-  return visibleNavItems(isOwner).filter((item) => MOBILE_HREFS.includes(item.href));
+export function mobileNavItems(access: NavAccess): NavItem[] {
+  return visibleNavItems(access).filter((item) => MOBILE_HREFS.includes(item.href));
 }

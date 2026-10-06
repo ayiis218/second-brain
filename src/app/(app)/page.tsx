@@ -1,13 +1,20 @@
+import { redirect } from "next/navigation";
+
 import { EntryFeed } from "@/components/entries/entry-feed";
 import { FinanceSummaryCard } from "@/components/finance/finance-summary-card";
 import { QuickCapture } from "@/components/entries/quick-capture";
 import { TodaySummary } from "@/components/dashboard/today-summary";
+import { getNavAudience } from "@/lib/auth-user";
 import { listEntries } from "@/lib/entries/repository";
 
 // Selalu baca data terbaru per request; tidak ada yang berguna untuk di-prerender.
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  // Pelanggan Legacy Vault tidak punya "beranda Second Brain" — dasbor ini
+  // dibangun untuk journal/task/habit yang bukan bagian dari produk mereka.
+  if ((await getNavAudience()) === "vault-only") redirect("/legacy");
+
   // nativeOnly: beranda untuk hal yang kamu tulis sendiri. Transaksi hasil
   // sync punya rumahnya sendiri di /finance.
   const { entries, nextCursor } = await listEntries({ limit: 20, nativeOnly: true });

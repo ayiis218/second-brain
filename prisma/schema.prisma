@@ -30,7 +30,14 @@ model User {
   /// HP yang hilang, karena JWT sendiri tidak bisa dicabut.
   sessionsValidAfter DateTime?
 
+  /// Jalur pendaftaran: "invite" (Second Brain biasa), "owner", atau
+  /// "vault" (produk Legacy Vault berdiri sendiri, tanpa undangan).
+  /// Dipakai murni untuk menentukan nav mana yang ditampilkan — BUKAN
+  /// kontrol akses. Lihat LegacyAccess untuk itu.
+  signupSource String @default("invite")
+
   legacyItems     LegacyItem[]
+  legacyAccess    LegacyAccess?
   knownDevices    KnownDevice[]
   invitesCreated  Invite[] @relation("InviteCreator")
   invitesRedeemed Invite[] @relation("InviteRedeemer")
@@ -227,6 +234,32 @@ enum LegacyCategory {
   INSTRUKSI
 }
 
+enum LegacyAccessStatus {
+  TRIAL
+  ACTIVE
+  CANCELED
+  EXPIRED
+}
+
+/// Entitlement Legacy Vault sebagai produk berdiri sendiri.
+///
+/// Menggantikan "satu OWNER_EMAIL" sebagai penjaga akses: siapa pun bisa
+/// punya baris ini. Pemilik (isOwner()) TIDAK butuh baris di sini — ia
+/// digrandfather langsung di requireVaultAccess(), bukan dipaksa trial.
+///
+/// Belum ada integrasi pembayaran yang mengisi status ACTIVE/CANCELED —
+/// itu fase berikutnya. Untuk sekarang hanya TRIAL (diisi startVaultTrial
+/// saat pendaftaran) dan EXPIRED (trial lewat tanggal).
+model LegacyAccess {
+  id          String             @id @default(cuid())
+  userId      String             @unique
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      LegacyAccessStatus @default(TRIAL)
+  trialEndsAt DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
 model LegacyItem {
   id       String         @id @default(cuid())
   userId   String
@@ -258,8 +291,9 @@ model LegacyAttachment {
   itemId String
   item   LegacyItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
-  /// Kunci objek di R2. Nama berkas asli ada di dalam ciphertext item,
-  /// bukan di sini — nama berkas sering membocorkan isinya.
+  /// Kunci objek di penyimpanan biner (Vercel Blob privat — lihat
+  /// src/lib/legacy/attachments.ts). Nama berkas asli ada di dalam
+  /// ciphertext item, bukan di sini — nama berkas sering membocorkan isinya.
   objectKey  String
   mimeType   String
   sizeBytes  Int

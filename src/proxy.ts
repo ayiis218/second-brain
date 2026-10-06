@@ -13,13 +13,14 @@ export default auth((req) => {
 // finance-dashboard (lihat rencana-perubahan-sync.md, Temuan C).
 // `invite` dikecualikan karena halaman itu justru diakses saat belum punya
 // sesi — kalau ikut dijaga, penerima undangan hanya akan dilempar ke /login
-// tanpa pernah sempat menyerahkan kodenya.
+// tanpa pernah sempat menyerahkan kodenya. `vault` sama alasannya: itu
+// landing publik produk Legacy Vault, diakses sebelum ada sesi sama sekali.
 //
 // manifest/icon juga: browser mengambilnya untuk memasang PWA, kadang tanpa
 // mengirim cookie. Kalau ikut dijaga, yang terunduh adalah halaman login —
 // dan pemasangan gagal dengan ikon rusak, bukan pesan yang jelas.
 export const config = {
   matcher: [
-    "/((?!api/auth|api/cron|login|invite|manifest.webmanifest|icon|apple-icon|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api/auth|api/cron|login|invite|vault|manifest.webmanifest|icon|apple-icon|_next/static|_next/image|favicon.ico).*)",
   ],
 };

@@ -121,6 +121,49 @@ export function open<T>(payload: {
   return JSON.parse(plain) as T;
 }
 
+/**
+ * Varian seal/open untuk lampiran biner (foto, scan dokumen) — mekanisme
+ * amplop-nya SAMA PERSIS dengan seal()/open() di atas (data key acak per
+ * lampiran, dibungkus master key), hanya langkah JSON.stringify/parse-nya
+ * dilepas karena isinya bukan objek JS, melainkan byte berkas apa adanya.
+ *
+ * Dipakai legacy/repository.ts untuk lampiran: isinya TIDAK disimpan di
+ * Postgres seperti LegacyItem.ciphertext — hanya byte terenkripsi inilah
+ * yang dikirim ke penyimpanan biner (lihat blob-storage.ts), sementara
+ * metadatanya (iv/authTag/wrappedKey/keyVersion) tetap di baris
+ * LegacyAttachment, sama seperti pola LegacyItem.
+ */
+export function sealBytes(plain: Buffer): SealedPayload {
+  const dataKey = randomBytes(32);
+  const iv = randomBytes(12);
+
+  const cipher = createCipheriv(ALGORITHM, dataKey, iv);
+  const ciphertext = Buffer.concat([cipher.update(plain), cipher.final()]);
+
+  return {
+    ciphertext: bytes(ciphertext),
+    iv: bytes(iv),
+    authTag: bytes(cipher.getAuthTag()),
+    wrappedKey: bytes(wrapDataKey(dataKey)),
+    keyVersion: CURRENT_KEY_VERSION,
+  };
+}
+
+/** Kebalikan sealBytes() — mengembalikan Buffer mentah, bukan objek yang di-JSON.parse. */
+export function openBytes(payload: {
+  ciphertext: Uint8Array;
+  iv: Uint8Array;
+  authTag: Uint8Array;
+  wrappedKey: Uint8Array;
+}): Buffer {
+  const dataKey = unwrapDataKey(Buffer.from(payload.wrappedKey));
+
+  const decipher = createDecipheriv(ALGORITHM, dataKey, Buffer.from(payload.iv));
+  decipher.setAuthTag(Buffer.from(payload.authTag));
+
+  return Buffer.concat([decipher.update(Buffer.from(payload.ciphertext)), decipher.final()]);
+}
+
 /** Apakah vault bisa dipakai sama sekali. Dipakai UI untuk memberi tahu. */
 export function vaultReady(): boolean {
   try {

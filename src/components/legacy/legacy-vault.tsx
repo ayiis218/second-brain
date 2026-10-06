@@ -1,22 +1,131 @@
 "use client";
 
-import { useState } from "react";
-import { AlertTriangle, ChevronDown, Plus, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { AlertTriangle, ChevronDown, Download, Paperclip, Plus, Trash2 } from "lucide-react";
 
 import { useAsyncAction } from "@/hooks/use-async-action";
-import { deleteLegacyItemAction } from "@/lib/legacy/actions";
+import {
+  deleteLegacyAttachmentAction,
+  deleteLegacyItemAction,
+  MAX_ATTACHMENT_BYTES,
+  uploadLegacyAttachmentAction,
+} from "@/lib/legacy/actions";
 import { CATEGORY_LABEL, type LegacyContent } from "@/lib/legacy/schemas";
 import { LegacyForm } from "./legacy-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
+export type AttachmentMeta = {
+  id: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: Date;
+};
+
 export type VaultItem = {
   id: string;
   category: string;
   content: LegacyContent;
   incomplete: boolean;
+  attachments: AttachmentMeta[];
 };
+
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+/**
+ * Lampiran per item: daftar yang sudah ada + input tambah baru.
+ *
+ * Diunduh lewat tautan biasa ke /api/legacy/attachments/[id] (Route Handler,
+ * bukan server action) — browser butuh respons dengan Content-Type biner,
+ * yang tidak bisa dikirim server action.
+ */
+function AttachmentList({ itemId, attachments }: { itemId: string; attachments: AttachmentMeta[] }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { pending, run } = useAsyncAction();
+
+  function onUpload(file: File) {
+    const formData = new FormData();
+    formData.set("file", file);
+    run(() => uploadLegacyAttachmentAction(itemId, formData), {
+      success: "Lampiran ditambahkan",
+      error: "Gagal menambah lampiran",
+    });
+  }
+
+  function onDelete(attachmentId: string) {
+    run(() => deleteLegacyAttachmentAction(attachmentId), {
+      success: "Lampiran dihapus",
+      error: "Gagal menghapus lampiran",
+    });
+  }
+
+  return (
+    <div className="space-y-1.5 border-t pt-2">
+      <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <Paperclip className="size-3.5" aria-hidden />
+        Lampiran
+      </p>
+
+      {attachments.length > 0 ? (
+        <ul className="space-y-1">
+          {attachments.map((a) => (
+            <li key={a.id} className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm">
+              <a
+                href={`/api/legacy/attachments/${a.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-w-0 flex-1 items-center gap-1.5 underline-offset-2 hover:underline"
+              >
+                <Download className="size-3.5 shrink-0" aria-hidden />
+                <span className="truncate">{a.mimeType}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">{formatSize(a.sizeBytes)}</span>
+              </a>
+              <Button
+                type="button"
+                size="icon-touch"
+                variant="ghost"
+                aria-label="Hapus lampiran"
+                disabled={pending}
+                onClick={() => onDelete(a.id)}
+              >
+                <Trash2 className="size-4" aria-hidden />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onUpload(file);
+          e.target.value = "";
+        }}
+      />
+      <Button
+        type="button"
+        size="xs"
+        variant="outline"
+        disabled={pending}
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <Paperclip className="size-3.5" aria-hidden />
+        {pending ? "Mengunggah…" : "Tambah lampiran"}
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        Maks {MAX_ATTACHMENT_BYTES / 1024 / 1024}MB per berkas — foto sertifikat, scan buku tabungan,
+        dan sejenisnya. Nama berkasnya sendiri tidak pernah disimpan.
+      </p>
+    </div>
+  );
+}
 
 function ItemCard({ item }: { item: VaultItem }) {
   const [editing, setEditing] = useState(false);
@@ -102,6 +211,8 @@ function ItemCard({ item }: { item: VaultItem }) {
             <Trash2 className="size-4" aria-hidden />
           </Button>
         </div>
+
+        <AttachmentList itemId={item.id} attachments={item.attachments} />
       </CardContent>
     </Card>
   );

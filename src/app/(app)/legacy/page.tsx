@@ -3,17 +3,25 @@ import { AlertTriangle, ShieldCheck } from "lucide-react";
 
 import { LegacyVault, type VaultItem } from "@/components/legacy/legacy-vault";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { isOwner } from "@/lib/auth-user";
+import { hasVaultAccess } from "@/lib/legacy/access";
 import { vaultReady } from "@/lib/legacy/crypto";
-import { countByCategory, countIncomplete, listByCategory } from "@/lib/legacy/repository";
+import {
+  countByCategory,
+  countIncomplete,
+  listAttachments,
+  listByCategory,
+} from "@/lib/legacy/repository";
 import { LEGACY_CATEGORIES } from "@/lib/legacy/schemas";
 
 export const dynamic = "force-dynamic";
 
 export default async function LegacyPage() {
   // Menyembunyikan menu BUKAN kontrol akses — halaman ini menolak sendiri.
-  // 404, bukan 403: keberadaan modul pun tidak perlu dikonfirmasi.
-  if (!(await isOwner())) notFound();
+  // 404, bukan 403: keberadaan modul pun tidak perlu dikonfirmasi. Gerbang
+  // sesungguhnya (requireVaultAccess()) ada di tiap fungsi repository;
+  // ini cuma supaya yang ditolak mendarat di 404 yang bersih, bukan
+  // error boundary generik.
+  if (!(await hasVaultAccess())) notFound();
 
   if (!vaultReady()) {
     return (
@@ -45,12 +53,19 @@ export default async function LegacyPage() {
   const itemsByCategory: Record<string, VaultItem[]> = {};
   for (const category of LEGACY_CATEGORIES) {
     if (!counts[category]) continue;
-    itemsByCategory[category] = (await listByCategory(category)).map((item) => ({
-      id: item.id,
-      category: item.category,
-      content: item.content,
-      incomplete: item.incomplete,
-    }));
+    const items = await listByCategory(category);
+    itemsByCategory[category] = await Promise.all(
+      items.map(async (item) => ({
+        id: item.id,
+        category: item.category,
+        content: item.content,
+        incomplete: item.incomplete,
+        // Metadata saja (nama berkas tidak pernah ada, lihat schema) —
+        // byte terenkripsinya baru diambil saat benar-benar diunduh,
+        // lewat /api/legacy/attachments/[id].
+        attachments: await listAttachments(item.id),
+      })),
+    );
   }
 
   const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
