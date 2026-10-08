@@ -333,6 +333,54 @@ for (const gate of GATES) {
   }
 }
 
+/**
+ * Setiap ekspor top-level di berkas `"use server"` wajib async function.
+ *
+ * Next.js menegakkan ini di RUNTIME ("A 'use server' file can only export
+ * async functions, found ..."), BUKAN saat `npm run typecheck`/`lint`/
+ * `build` — ketiganya lolos bersih walau pelanggarannya ada, dan baru
+ * ketahuan saat modulnya benar-benar dimuat request pertama. Satu konstanta
+ * angka yang lolos ke sini pernah mematahkan SELURUH action di satu berkas
+ * (bukan cuma satu fungsi), dengan gejala yang jauh dari penyebabnya
+ * (React error #441 generik di produksi). Gerbang ini menangkapnya sebelum
+ * commit, bukan setelah dilaporkan.
+ */
+{
+  const offenders = [];
+  const USE_SERVER_RE = /^["']use server["'];?\s*$/;
+  const ALLOWED_EXPORT_RE = /^export\s+(default\s+)?async\s+function\b/;
+  const ALLOWED_CONST_RE = /^export\s+const\s+\w+\s*=\s*async\b/;
+  const TYPE_ONLY_RE = /^export\s+(type|interface)\b/;
+
+  for (const file of files) {
+    const rel = relative(".", file);
+    const lines = readFileSync(file, "utf8").split("\n");
+
+    const firstCode = lines.find((l) => l.trim().length > 0);
+    if (!firstCode || !USE_SERVER_RE.test(firstCode.trim())) continue;
+
+    lines.forEach((line, i) => {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("export ")) return;
+      if (TYPE_ONLY_RE.test(trimmed)) return;
+      if (ALLOWED_EXPORT_RE.test(trimmed) || ALLOWED_CONST_RE.test(trimmed)) return;
+
+      offenders.push(`${rel}:${i + 1}  ${trimmed.slice(0, 70)}`);
+    });
+  }
+
+  if (offenders.length > 0) {
+    failed = true;
+    console.error(`\n✗ ekspor non-async-function di berkas "use server"`);
+    for (const o of offenders) console.error(`    ${o}`);
+    console.error(
+      `  → Pindahkan konstanta/tipe ini ke berkas lain (mis. schemas.ts) — "use server" hanya boleh mengekspor async function.`,
+    );
+  } else {
+    console.log(`✓ ekspor non-async-function di berkas "use server"`);
+  }
+}
+
 if (failed) {
   console.error(
     "\nGerbang bocor. Aturan-aturan ini dijelaskan di README bagian " +

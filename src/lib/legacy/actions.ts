@@ -10,10 +10,7 @@ import {
   deleteLegacyItem,
   updateLegacyItem,
 } from "./repository";
-import { legacyCategorySchema } from "./schemas";
-
-/** Dicocokkan juga di UI (legacy-vault.tsx) — satu tempat ganti kalau angkanya berubah. */
-export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+import { legacyCategorySchema, MAX_ATTACHMENT_BYTES } from "./schemas";
 
 /**
  * Action vault. Seluruh pemeriksaan kepemilikan ada di repository — kalau
