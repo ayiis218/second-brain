@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Wallet } from "lucide-react";
 
+import { Amount } from "@/components/shared/amount";
+import { BalanceVisibilityToggle } from "@/components/shared/balance-visibility";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatIdr } from "@/lib/format";
 import { isOwner } from "@/lib/auth-user";
@@ -29,17 +31,20 @@ export async function FinanceSummaryCard() {
             {stale ? (
               <span className="ml-auto text-xs text-destructive">needs refresh</span>
             ) : null}
+            {/* ml-auto cuma kalau stale badge-nya tidak ada — keduanya sama-sama
+                mendorong ke kanan, tapi tidak boleh dobel. */}
+            <BalanceVisibilityToggle className={stale ? "" : "ml-auto"} />
           </div>
 
           <p className="text-2xl font-semibold tabular-nums">
-            {formatIdr(payload.totals.net)}
+            <Amount>{formatIdr(payload.totals.net)}</Amount>
           </p>
 
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <span>Wallet {formatIdr(payload.totals.wallet)}</span>
-            <span>Assets {formatIdr(payload.totals.assets)}</span>
-            <span>Investments {formatIdr(payload.totals.investments)}</span>
-            <span>Debt {formatIdr(payload.totals.utang)}</span>
+            <span>Wallet <Amount>{formatIdr(payload.totals.wallet)}</Amount></span>
+            <span>Assets <Amount>{formatIdr(payload.totals.assets)}</Amount></span>
+            <span>Investments <Amount>{formatIdr(payload.totals.investments)}</Amount></span>
+            <span>Debt <Amount>{formatIdr(payload.totals.utang)}</Amount></span>
           </div>
         </CardContent>
       </Card>

@@ -1,5 +1,6 @@
 import { Flame } from "lucide-react";
 
+import { Amount } from "@/components/shared/amount";
 import { StatRow } from "@/components/shared/stat-row";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +36,8 @@ function Stat({
   previous,
 }: {
   label: string;
-  value: string;
+  /** String untuk statistik biasa; `<Amount>` untuk baris Spending. */
+  value: React.ReactNode;
   current?: number | null;
   previous?: number | null;
 }) {
@@ -89,7 +91,7 @@ function StatList({ current, previous }: { current: PeriodStats; previous: Perio
       />
       <Stat
         label="Spending"
-        value={current.spending === null ? "—" : formatIdr(current.spending)}
+        value={current.spending === null ? "—" : <Amount>{formatIdr(current.spending)}</Amount>}
         current={current.spending}
         previous={previous.spending}
       />
