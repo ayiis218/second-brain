@@ -49,9 +49,19 @@ const GATES = [
     pattern: /\bprisma\.legacy[A-Za-z]*\b/,
     // access.ts & pin.ts ikut diizinkan: keduanya bagian dari gerbang
     // entitlement/PIN yang dipanggil repository.ts, dan sama-sama perlu
-    // menyentuh tabel LegacyAccess secara langsung.
-    allow: ["src/lib/legacy/repository.ts", "src/lib/legacy/access.ts", "src/lib/legacy/pin.ts"],
-    hint: "Vault hanya boleh diakses lewat src/lib/legacy/repository.ts, access.ts, atau pin.ts, yang memeriksa kepemilikan.",
+    // menyentuh tabel LegacyAccess secara langsung. trial-expiry.ts juga:
+    // job sistem lintas-user, lihat komentarnya sendiri dan SYSTEM_PATHS
+    // di bawah soal kenapa ini beda dari access.ts/pin.ts.
+    allow: [
+      "src/lib/legacy/repository.ts",
+      "src/lib/legacy/access.ts",
+      "src/lib/legacy/pin.ts",
+      "src/lib/legacy/trial-expiry.ts",
+      // Ringkasan funnel admin — lintas semua user, lihat komentar di
+      // berkasnya sendiri.
+      "src/lib/legacy/vault-funnel.ts",
+    ],
+    hint: "Vault hanya boleh diakses lewat src/lib/legacy/repository.ts, access.ts, pin.ts, trial-expiry.ts, atau vault-funnel.ts, yang memeriksa kepemilikan.",
   },
   {
     name: "master key dibaca di luar legacy/crypto",
@@ -105,10 +115,15 @@ const GATES = [
       "src/lib/legacy/repository.ts",
       "src/lib/legacy/access.ts",
       "src/lib/legacy/pin.ts",
-      // Retensi trash berjalan tanpa sesi dan sengaja lintas-user — tidak
-      // ada userId tunggal untuk disaring. Lihat SYSTEM_PATHS di bawah:
-      // berkas ini SENGAJA tidak didaftarkan di sana.
+      // Retensi trash & expiry trial berjalan tanpa sesi dan sengaja
+      // lintas-user — tidak ada userId tunggal untuk disaring. Lihat
+      // SYSTEM_PATHS di bawah: ketiganya SENGAJA tidak didaftarkan di sana.
       "src/lib/entries/trash-retention.ts",
+      "src/lib/legacy/trial-expiry.ts",
+      // Ringkasan funnel admin: PAKAI sesi (isOwner()), tapi querynya
+      // sendiri sengaja lintas-user (data admin, bukan vault milik
+      // pemanggil) — beda dari access.ts/pin.ts yang di SYSTEM_PATHS.
+      "src/lib/legacy/vault-funnel.ts",
     ],
     hint: "Client Prisma mentah melewati penyaring userId. Pakai scopedDb() atau fungsi repository.",
   },
@@ -133,14 +148,15 @@ const RAW_QUERY_GATE = {
  * Sebagai gantinya, setiap query di sana wajib menyebut `ownerId`.
  */
 /**
- * `src/lib/entries/trash-retention.ts` SENGAJA tidak ada di sini.
+ * `src/lib/entries/trash-retention.ts` dan `src/lib/legacy/trial-expiry.ts`
+ * SENGAJA tidak ada di sini.
  *
  * Aturan "setiap query wajib menyebut ownerId" dibuat untuk jalur sistem
- * yang menulis data MILIK SATU owner (sync finance). Retensi trash
- * sebaliknya: kebijakan yang berlaku sama untuk SELURUH user sekaligus,
- * jadi query tanpa userId di sana bukan celah — itu memang desainnya.
- * Jangan tambahkan berkas itu ke sini tanpa mengubah juga apa yang
- * query-nya lakukan.
+ * yang menulis data MILIK SATU owner (sync finance). Retensi trash dan
+ * expiry trial sebaliknya: kebijakan yang berlaku sama untuk SELURUH user
+ * sekaligus, jadi query tanpa userId di sana bukan celah — itu memang
+ * desainnya. Jangan tambahkan kedua berkas itu ke sini tanpa mengubah juga
+ * apa yang query-nya lakukan.
  */
 const SYSTEM_PATHS = [
   { path: "src/lib/entries/sync-repository.ts", token: "ownerId" },
@@ -378,6 +394,52 @@ for (const gate of GATES) {
     );
   } else {
     console.log(`✓ ekspor non-async-function di berkas "use server"`);
+  }
+}
+
+/**
+ * `page.tsx` dan `route.ts` wajib eksplisit soal dynamic/runtime —
+ * bukan mengandalkan Next menyimpulkannya diam-diam dari pemakaian
+ * `searchParams`/default runtime.
+ *
+ * Ini bukan dugaan: ditemukan DUA pelanggaran nyata saat gerbang ini
+ * ditulis (login/page.tsx tanpa `dynamic`, legacy/attachments/[id]/route.ts
+ * tanpa `runtime`) — keduanya kebetulan tidak berdampak SEKARANG karena
+ * Next menyimpulkannya dari hal lain di sekitarnya. "Kebetulan tidak
+ * berdampak karena perilaku implisit" persis pola yang melahirkan insiden
+ * ekspor `"use server"` di atas: aman sampai sesuatu di sekitarnya berubah
+ * dan perilaku implisitnya ikut hilang tanpa peringatan.
+ */
+{
+  const offenders = [];
+
+  const PAGE_SCOPE_RE = /^src\/app\/\(app\)\/|^src\/app\/vault\/page\.tsx$|^src\/app\/login\/page\.tsx$|^src\/app\/invite\//;
+
+  for (const file of files) {
+    const rel = relative(".", file);
+    const base = rel.split("/").pop();
+    const isPage = base === "page.tsx" && PAGE_SCOPE_RE.test(rel);
+    const isRoute = base === "route.ts";
+    if (!isPage && !isRoute) continue;
+
+    const source = readFileSync(file, "utf8");
+    if (!/^export const dynamic\s*=/m.test(source)) {
+      offenders.push(`${rel}  tanpa "export const dynamic"`);
+    }
+    if (isRoute && !/^export const runtime\s*=/m.test(source)) {
+      offenders.push(`${rel}  tanpa "export const runtime"`);
+    }
+  }
+
+  if (offenders.length > 0) {
+    failed = true;
+    console.error(`\n✗ dynamic/runtime tidak eksplisit di page.tsx atau route.ts`);
+    for (const o of offenders) console.error(`    ${o}`);
+    console.error(
+      `  → Tambahkan "export const dynamic = ...", dan untuk route.ts juga "export const runtime = ..." — jangan andalkan Next menyimpulkannya diam-diam.`,
+    );
+  } else {
+    console.log(`✓ dynamic/runtime tidak eksplisit di page.tsx atau route.ts`);
   }
 }
 

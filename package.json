@@ -9,6 +9,8 @@
     "postinstall": "prisma generate",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "check:gates": "node scripts/check-gates.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
@@ -57,6 +59,8 @@
     "eslint-config-next": "16.3.4",
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.11"
   }
 }

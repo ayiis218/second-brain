@@ -11,6 +11,10 @@ const ERROR_MESSAGE: Record<string, string> = {
     "Undangan sudah dipakai, dicabut, kedaluwarsa, atau ditujukan untuk email lain.",
 };
 
+// Eksplisit, bukan mengandalkan Next menyimpulkannya dari pemakaian
+// searchParams — gerbang di scripts/check-gates.mjs mewajibkan ini.
+export const dynamic = "force-dynamic";
+
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { error } = await searchParams;
   const message = typeof error === "string" ? ERROR_MESSAGE[error] : undefined;

@@ -1,6 +1,21 @@
+import { revalidateTag, unstable_cache } from "next/cache";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+
+/**
+ * Tag cache tunggal untuk snapshot posisi — satu baris, satu tag.
+ *
+ * `unstable_cache`, bukan directive `use cache`: yang terakhir butuh flag
+ * `cacheComponents: true` di next.config.ts, dan flag itu MENOLAK build
+ * kalau ada `export const dynamic`/`runtime` eksplisit di page.tsx/route.ts
+ * — persis yang diwajibkan gerbang "dynamic/runtime tidak eksplisit" di
+ * scripts/check-gates.mjs (sudah terbukti menangkap 3 inkonsistensi nyata).
+ * Dua hal itu tidak bisa dipakai bersamaan tanpa menulis ulang gerbang itu
+ * untuk SELURUH app — di luar cakupan satu halaman Finance. `unstable_cache`
+ * tidak butuh flag apa pun dan tidak menyentuh dynamic/runtime sama sekali.
+ */
+const SNAPSHOT_CACHE_TAG = "finance-snapshot";
 
 /**
  * Menarik posisi keuangan dari finance-dashboard.
@@ -90,6 +105,17 @@ export async function runFinanceSnapshotSync(): Promise<FinanceSnapshotPayload> 
         lastError: null,
       },
     });
+    // Revalidasi LATAR BELAKANG (bukan seketika seperti updateTag) —
+    // batasan unstable_cache, bukan pilihan. Permintaan berikutnya yang
+    // melihat angka baru, bukan response yang sama persis; untuk tombol
+    // "Sync now" yang hasilnya langsung dirender dari nilai balik aksinya
+    // sendiri (lihat sync-button.tsx), ini tidak terasa.
+    //
+    // `{ expire: 0 }`: Next 16 mewajibkan argumen kedua (profil cacheLife
+    // atau { expire }) — tidak ada lagi default "kedaluwarsa seketika"
+    // yang implisit seperti versi sebelumnya. 0 detik adalah padanan
+    // paling dekat dengan perilaku lama itu.
+    revalidateTag(SNAPSHOT_CACHE_TAG, { expire: 0 });
 
     return payload;
   } catch (error) {
@@ -107,6 +133,9 @@ export async function runFinanceSnapshotSync(): Promise<FinanceSnapshotPayload> 
       },
       update: { lastError: message, fetchedAt: new Date() },
     });
+    // lastError juga berubah lewat jalur gagal — kartu posisi harus
+    // menunjukkan pesan error yang baru, bukan yang basi.
+    revalidateTag(SNAPSHOT_CACHE_TAG, { expire: 0 });
 
     throw error;
   }
@@ -128,10 +157,27 @@ export type StoredSnapshot = {
   stale: boolean;
 };
 
+/**
+ * Baris mentah saja yang di-cache — BUKAN seluruh getFinanceSnapshot().
+ *
+ * `stale` di getFinanceSnapshot() dihitung dari `Date.now()`, nilai yang
+ * sengaja TIDAK murni dan tidak boleh ikut dibekukan di dalam cache.
+ * Dipisah di sini supaya "basi atau tidak" selalu dihitung ulang tiap
+ * pemanggilan, sementara query database-nya yang mahal yang singgah di
+ * cache. `['finance-snapshot-row']`: kunci cache statis — tidak ada
+ * parameter yang membedakan satu pemanggilan dari yang lain (snapshot-nya
+ * selalu satu baris untuk seluruh app), jadi tidak perlu diturunkan dari
+ * argumen seperti pola `unstable_cache` pada umumnya.
+ */
+const getCachedSnapshotRow = unstable_cache(
+  () => prisma.financeSnapshot.findUnique({ where: { source: FINANCE_SOURCE } }),
+  ["finance-snapshot-row"],
+  // Posisi berubah beberapa kali sehari lewat sync, bukan per-detik.
+  { tags: [SNAPSHOT_CACHE_TAG], revalidate: 60 * 60 },
+);
+
 export async function getFinanceSnapshot(): Promise<StoredSnapshot> {
-  const row = await prisma.financeSnapshot.findUnique({
-    where: { source: FINANCE_SOURCE },
-  });
+  const row = await getCachedSnapshotRow();
 
   if (!row) {
     return {
@@ -144,12 +190,23 @@ export async function getFinanceSnapshot(): Promise<StoredSnapshot> {
   }
 
   const parsed = snapshotSchema.safeParse(row.payload);
-  const capturedAt = row.capturedAt.getTime() === 0 ? null : row.capturedAt;
+
+  // `unstable_cache` meng-serialize nilai baliknya lewat JSON untuk
+  // disimpan — tidak seperti RSC payload biasa, JSON tidak punya tipe Date
+  // sendiri, jadi apa yang keluar dari cache adalah STRING, bukan Date,
+  // walau tipe Prisma-nya bilang DateTime. `new Date(...)` di sini
+  // mengembalikannya jadi objek Date lagi sebelum `.getTime()` dipanggil —
+  // tanpa ini, `row.capturedAt.getTime is not a function` dilempar setiap
+  // kali nilainya datang dari cache (dibuktikan lewat verifikasi end-to-end,
+  // bukan dugaan).
+  const rawCapturedAt = new Date(row.capturedAt);
+  const capturedAt = rawCapturedAt.getTime() === 0 ? null : rawCapturedAt;
+  const fetchedAt = row.fetchedAt ? new Date(row.fetchedAt) : null;
 
   return {
     payload: parsed.success ? parsed.data : null,
     capturedAt,
-    fetchedAt: row.fetchedAt,
+    fetchedAt,
     lastError: row.lastError,
     stale:
       capturedAt !== null &&

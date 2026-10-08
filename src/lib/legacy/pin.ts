@@ -1,7 +1,8 @@
-import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 
 import { requireVaultAccess } from "./access";
+import { derive, isLockedOut, LOCKOUT_MINUTES, MAX_FAILED_ATTEMPTS, nextFailureState } from "./pin-crypto";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -23,8 +24,6 @@ import { prisma } from "@/lib/prisma";
  */
 
 const PIN_PATTERN = /^\d{4,6}$/;
-const MAX_FAILED_ATTEMPTS = 5;
-const LOCKOUT_MINUTES = 15;
 const UNLOCK_MINUTES = 15;
 const UNLOCK_COOKIE = "sb_vault_unlock";
 
@@ -32,10 +31,6 @@ function hmacSecret(): string {
   const secret = process.env.AUTH_SECRET;
   if (!secret) throw new Error("AUTH_SECRET belum diset.");
   return secret;
-}
-
-function derive(pin: string, salt: Buffer): Buffer {
-  return scryptSync(pin, salt, 64);
 }
 
 /**
@@ -101,8 +96,8 @@ export async function verifyPin(pin: string): Promise<void> {
     throw new Error("PIN belum diset.");
   }
 
-  if (access.pinLockedUntil && access.pinLockedUntil > new Date()) {
-    const minutesLeft = Math.ceil((access.pinLockedUntil.getTime() - Date.now()) / 60_000);
+  if (isLockedOut(access.pinLockedUntil, new Date())) {
+    const minutesLeft = Math.ceil((access.pinLockedUntil!.getTime() - Date.now()) / 60_000);
     throw new Error(`Terlalu banyak percobaan salah. Coba lagi dalam ${minutesLeft} menit.`);
   }
 
@@ -111,22 +106,16 @@ export async function verifyPin(pin: string): Promise<void> {
   const matches = submitted.length === stored.length && timingSafeEqual(submitted, stored);
 
   if (!matches) {
-    const attempts = access.pinFailedAttempts + 1;
-    const lockedOut = attempts >= MAX_FAILED_ATTEMPTS;
+    const next = nextFailureState(access.pinFailedAttempts);
 
     await prisma.legacyAccess.update({
       where: { userId },
-      data: {
-        pinFailedAttempts: lockedOut ? 0 : attempts,
-        pinLockedUntil: lockedOut
-          ? new Date(Date.now() + LOCKOUT_MINUTES * 60_000)
-          : null,
-      },
+      data: { pinFailedAttempts: next.attempts, pinLockedUntil: next.lockedUntil },
     });
 
-    throw lockedOut
+    throw next.lockedUntil
       ? new Error(`Terlalu banyak percobaan salah. Coba lagi dalam ${LOCKOUT_MINUTES} menit.`)
-      : new Error(`PIN salah. ${MAX_FAILED_ATTEMPTS - attempts} percobaan tersisa.`);
+      : new Error(`PIN salah. ${MAX_FAILED_ATTEMPTS - next.attempts} percobaan tersisa.`);
   }
 
   await prisma.legacyAccess.update({

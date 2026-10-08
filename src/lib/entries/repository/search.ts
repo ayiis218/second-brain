@@ -1,5 +1,6 @@
 import { requireUserId } from "@/lib/auth-user";
 import { prisma } from "@/lib/prisma";
+import { buildPrefixQuery } from "./search-query";
 
 export type SearchHit = {
   id: string;
@@ -24,24 +25,7 @@ export async function searchEntries(query: string, opts?: { type?: string; limit
   const trimmed = query.trim();
   if (!trimmed) return [];
 
-  // Pencarian sambil mengetik butuh kata terakhir diperlakukan sebagai
-  // awalan — tanpa itu "kambi" tidak akan pernah menemukan "kambing".
-  //
-  // JANGAN meng-OR awalan itu dengan query utama. Versi lama melakukannya
-  // dan hasilnya `('zzzz' & 'makan') | 'makan:*'` — cabang kanan cocok
-  // sendirian, sehingga semua kata kecuali yang terakhir diabaikan. Mencari
-  // "zzzz makan" mengembalikan 51 baris padahal seharusnya nol.
-  //
-  // Jadi tsquery-nya dirakit utuh: kata-kata awal di-AND biasa, hanya kata
-  // terakhir yang dapat ':*'.
-  const terms = trimmed.split(/\s+/).filter(Boolean);
-  const plain = terms.length > 0 && terms.every((t) => /^[\p{L}\p{N}]+$/u.test(t));
-  // Query dengan kutip atau operator (-kata, OR) diserahkan sepenuhnya ke
-  // websearch_to_tsquery, dan fitur awalan dilepas. Mencampur keduanya
-  // persis yang melahirkan bug di atas.
-  const prefixQuery = plain
-    ? terms.map((t, i) => (i === terms.length - 1 ? `${t}:*` : t)).join(" & ")
-    : null;
+  const prefixQuery = buildPrefixQuery(trimmed);
 
   const typeFilter = opts?.type ?? null;
   const limit = opts?.limit ?? 50;

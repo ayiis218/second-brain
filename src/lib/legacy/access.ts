@@ -35,8 +35,9 @@ export async function hasVaultAccess(): Promise<boolean> {
   if (access.status === "TRIAL") {
     // Trial yang tanggalnya sudah lewat tidak otomatis ditulis EXPIRED di
     // sini — baca murni, tanpa efek samping. Penulisan status sebenarnya
-    // adalah tugas job terpisah (pola yang sama dengan purge trash),
-    // belum dalam cakupan fase ini.
+    // tugas job terpisah (src/lib/legacy/trial-expiry.ts, cron harian),
+    // tapi fungsi ini TIDAK bergantung padanya: perbandingan tanggal
+    // langsung di bawah tetap benar walau job-nya belum pernah berjalan.
     return !access.trialEndsAt || access.trialEndsAt > new Date();
   }
   return false;
