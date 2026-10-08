@@ -258,6 +258,15 @@ model LegacyAccess {
   trialEndsAt DateTime?
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
+
+  /// PIN tambahan khusus modul Legacy — lapis "pastikan ini benar kamu" di
+  /// atas sesi Google yang sudah berumur sampai 7 hari. scrypt + salt acak,
+  /// bukan plaintext; lihat src/lib/legacy/pin.ts (satu-satunya berkas yang
+  /// boleh menghitung/membandingkan hash ini).
+  pinHash           Bytes?
+  pinSalt           Bytes?
+  pinFailedAttempts Int       @default(0)
+  pinLockedUntil    DateTime?
 }
 
 model LegacyItem {

@@ -47,11 +47,11 @@ const GATES = [
   {
     name: "prisma.legacyItem di luar repository legacy",
     pattern: /\bprisma\.legacy[A-Za-z]*\b/,
-    // access.ts ikut diizinkan: ia yang MENDEFINISIKAN gerbang entitlement
-    // (requireVaultAccess) yang dipanggil repository.ts, jadi ia perlu
+    // access.ts & pin.ts ikut diizinkan: keduanya bagian dari gerbang
+    // entitlement/PIN yang dipanggil repository.ts, dan sama-sama perlu
     // menyentuh tabel LegacyAccess secara langsung.
-    allow: ["src/lib/legacy/repository.ts", "src/lib/legacy/access.ts"],
-    hint: "Vault hanya boleh diakses lewat src/lib/legacy/repository.ts atau access.ts, yang memeriksa kepemilikan.",
+    allow: ["src/lib/legacy/repository.ts", "src/lib/legacy/access.ts", "src/lib/legacy/pin.ts"],
+    hint: "Vault hanya boleh diakses lewat src/lib/legacy/repository.ts, access.ts, atau pin.ts, yang memeriksa kepemilikan.",
   },
   {
     name: "master key dibaca di luar legacy/crypto",
@@ -104,6 +104,7 @@ const GATES = [
       // penyaring pemilik".
       "src/lib/legacy/repository.ts",
       "src/lib/legacy/access.ts",
+      "src/lib/legacy/pin.ts",
       // Retensi trash berjalan tanpa sesi dan sengaja lintas-user — tidak
       // ada userId tunggal untuk disaring. Lihat SYSTEM_PATHS di bawah:
       // berkas ini SENGAJA tidak didaftarkan di sana.
@@ -148,6 +149,7 @@ const SYSTEM_PATHS = [
   // menyertakannya membuka seluruh vault ke sesi mana pun.
   { path: "src/lib/legacy/repository.ts", token: "userId" },
   { path: "src/lib/legacy/access.ts", token: "userId" },
+  { path: "src/lib/legacy/pin.ts", token: "userId" },
 ];
 const SYSTEM_GATE = {
   name: "query tanpa penyaring pemilik",
