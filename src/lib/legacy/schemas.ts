@@ -80,3 +80,13 @@ export function isIncomplete(category: string, content: LegacyContent): boolean 
  */
 export const CLAIM_HINT =
   "Ke lembaga mana? Bawa dokumen apa? Ada tenggat waktu? Siapa yang bisa dihubungi kalau bingung?";
+
+/**
+ * Batas ukuran lampiran vault. Hidup di sini, BUKAN di legacy/actions.ts —
+ * berkas itu `"use server"`, dan Next.js mewajibkan SETIAP ekspornya berupa
+ * async function ("A 'use server' file can only export async functions").
+ * Konstanta angka yang pernah diekspor dari sana mematahkan seluruh berkas,
+ * bukan cuma satu action — gejalanya jadi "gagal nyaris di semua aksi
+ * Legacy," persis yang dilaporkan.
+ */
+export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;

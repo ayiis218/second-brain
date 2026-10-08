@@ -7,10 +7,9 @@ import { useAsyncAction } from "@/hooks/use-async-action";
 import {
   deleteLegacyAttachmentAction,
   deleteLegacyItemAction,
-  MAX_ATTACHMENT_BYTES,
   uploadLegacyAttachmentAction,
 } from "@/lib/legacy/actions";
-import { CATEGORY_LABEL, type LegacyContent } from "@/lib/legacy/schemas";
+import { CATEGORY_LABEL, MAX_ATTACHMENT_BYTES, type LegacyContent } from "@/lib/legacy/schemas";
 import { LegacyForm } from "./legacy-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
