@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { Amount } from "@/components/shared/amount";
 import { FadeIn } from "@/components/shared/fade-in";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +49,9 @@ export function EntryCard({ entry, index = 0 }: { entry: EntryWithTags; index?: 
               <Badge variant="secondary">{TYPE_LABEL[entry.type] ?? entry.type}</Badge>
               {mood ? <span aria-label="Mood">{mood}</span> : null}
               {amount ? (
-                <span className="font-medium tabular-nums">{amount}</span>
+                <span className="font-medium tabular-nums">
+                  <Amount>{amount}</Amount>
+                </span>
               ) : null}
               <span className="ml-auto text-xs text-muted-foreground">
                 {formatDateTime(entry.occurredAt)}

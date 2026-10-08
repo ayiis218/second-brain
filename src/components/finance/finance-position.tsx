@@ -1,5 +1,7 @@
 import { AlertTriangle, Clock } from "lucide-react";
 
+import { Amount } from "@/components/shared/amount";
+import { BalanceVisibilityToggle } from "@/components/shared/balance-visibility";
 import { StatRow } from "@/components/shared/stat-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatIdr } from "@/lib/format";
@@ -43,16 +45,30 @@ export function FinancePosition({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardDescription>Net position</CardDescription>
-          <CardTitle className="text-3xl tabular-nums">{formatIdr(totals.net)}</CardTitle>
+          <div className="flex items-center justify-between gap-2">
+            <CardDescription>Net position</CardDescription>
+            <BalanceVisibilityToggle />
+          </div>
+          <CardTitle className="text-3xl tabular-nums">
+            <Amount>{formatIdr(totals.net)}</Amount>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div>
-            <StatRow label={`Accounts & wallets${counts ? ` (${counts.accounts})` : ""}`} value={formatIdr(totals.wallet)} />
-            <StatRow label={`Assets${counts ? ` (${counts.assets})` : ""}`} value={formatIdr(totals.assets)} />
-            <StatRow label={`Investments${counts ? ` (${counts.investments})` : ""}`} value={formatIdr(totals.investments)} />
-            <StatRow label="Receivables" value={formatIdr(totals.piutang)} />
-            <StatRow label="Debt" value={`− ${formatIdr(totals.utang)}`} muted />
+            <StatRow
+              label={`Accounts & wallets${counts ? ` (${counts.accounts})` : ""}`}
+              value={<Amount>{formatIdr(totals.wallet)}</Amount>}
+            />
+            <StatRow
+              label={`Assets${counts ? ` (${counts.assets})` : ""}`}
+              value={<Amount>{formatIdr(totals.assets)}</Amount>}
+            />
+            <StatRow
+              label={`Investments${counts ? ` (${counts.investments})` : ""}`}
+              value={<Amount>{formatIdr(totals.investments)}</Amount>}
+            />
+            <StatRow label="Receivables" value={<Amount>{formatIdr(totals.piutang)}</Amount>} />
+            <StatRow label="Debt" value={<Amount>{`− ${formatIdr(totals.utang)}`}</Amount>} muted />
           </div>
 
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -87,7 +103,7 @@ export function FinancePosition({
           </CardHeader>
           <CardContent>
             {payload.monthlyExpense.map((m) => (
-              <StatRow key={m.month} label={m.month} value={formatIdr(m.total)} />
+              <StatRow key={m.month} label={m.month} value={<Amount>{formatIdr(m.total)}</Amount>} />
             ))}
           </CardContent>
         </Card>

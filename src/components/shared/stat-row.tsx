@@ -14,7 +14,8 @@ export function StatRow({
   trailing,
 }: {
   label: string;
-  value: string;
+  /** String untuk statistik biasa; `<Amount>` untuk baris yang nominal rupiah. */
+  value: React.ReactNode;
   /** Untuk angka yang bukan fokus baris — mis. utang yang sudah dihitung sebagai pengurang. */
   muted?: boolean;
   /** Ditempel di kanan angka, sebaris. Dipakai Insight untuk selisih antar-periode. */
