@@ -1,5 +1,6 @@
 import { getAttachmentFile } from "@/lib/legacy/repository";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**

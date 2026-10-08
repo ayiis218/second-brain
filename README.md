@@ -83,10 +83,22 @@ Modul Legacy (vault estate planning terenkripsi) bisa dipakai siapa pun yang men
 - **Nav**: `User.signupSource` menentukan audience (`"full"` vs `"vault-only"`) di `src/lib/auth-user.ts` (`getNavAudience()`) — pelanggan vault-only hanya melihat Legacy + Settings (`src/components/layout/nav-items.ts`).
 - **Lampiran** (`LegacyAttachment`): byte berkas dienkripsi per-lampiran (`sealBytes`/`openBytes` di `legacy/crypto.ts`, mekanisme sama dengan isi item) lalu disimpan ke **Vercel Blob privat** (`legacy/blob-storage.ts`); yang ada di Postgres cuma metadata (iv/authTag/wrappedKey/mimeType/sizeBytes) dan referensi objek. Diunduh lewat `/api/legacy/attachments/[id]`, bukan server action — butuh respons biner dengan header `Content-Type`.
 
-**Belum aktif — langkah manual yang masih perlu dilakukan sebelum fitur ini bisa dipakai sungguhan:**
+**Vercel Blob sudah ter-provisioning** (store privat `second-brain-legacy`, di-link lewat `vercel blob create-store`) — lampiran vault aktif penuh, diuji end-to-end (upload, unduh, hapus) terhadap store sungguhan.
 
-1. **Pembayaran.** Saat ini hanya masa coba 14 hari, tidak ada yang menagih setelahnya. Pilih provider lewat `/marketplace` — jangan pasang SDK provider apa pun tanpa lewat jalur itu.
-2. **Vercel Blob.** Perlu store privat ter-provisioning (`vercel link` lalu `vercel blob create-store <nama> --access private`, lalu `vercel env pull .env.local`). Tanpa `BLOB_READ_WRITE_TOKEN`/`BLOB_STORE_ID`, upload/unduh lampiran akan gagal — isi vault yang lain (item tanpa lampiran) tidak terpengaruh.
+**Masih belum aktif:**
+
+1. **Pembayaran.** Saat ini hanya masa coba 14 hari. Job `expire-vault-trials` (lihat cron di bawah) menandai trial yang lewat tanggal jadi `EXPIRED` — status-nya benar, tapi tidak ada yang menagih setelahnya. Pilih provider lewat `/marketplace` — jangan pasang SDK provider apa pun tanpa lewat jalur itu.
+
+### Expiry trial otomatis
+
+Trial yang `trialEndsAt`-nya lewat ditandai `EXPIRED` sekali sehari — **bukan gerbang akses** (`hasVaultAccess()` sudah menolak trial yang lewat tanggal terlepas dari job ini), murni supaya `status` mencerminkan kenyataan untuk ringkasan funnel di Settings.
+
+```bash
+# jalankan manual
+curl -H "Authorization: Bearer $CRON_SECRET" localhost:3001/api/cron/expire-vault-trials
+```
+
+Berjalan tanpa sesi dan sengaja lintas-user, pola yang sama dengan purge trash — lihat `src/lib/legacy/trial-expiry.ts`.
 
 ## Habit, Insight, dan PWA (Fase 4)
 

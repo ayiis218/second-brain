@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { scopedDb } from "@/lib/db";
 import { requireUserId } from "@/lib/auth-user";
 import { parseEntryContent } from "../schemas";
+import { computeStreak } from "./habit-streak";
 
 export type HabitSummary = {
   id: string;
@@ -11,27 +12,6 @@ export type HabitSummary = {
   streak: number;
   recentDays: { dayKey: string; done: boolean }[];
 };
-
-/**
- * Streak = jumlah hari berurutan sampai hari ini.
- *
- * Hari ini yang belum dicentang TIDAK memutus streak — kalau begitu, streak
- * akan terlihat nol setiap pagi sebelum kebiasaannya dikerjakan. Hitungannya
- * dimulai dari hari ini kalau sudah dicentang, kalau belum dari kemarin.
- */
-function computeStreak(done: ReadonlySet<string>, todayKey: string): number {
-  const cursor = new Date(`${todayKey}T00:00:00Z`);
-  if (!done.has(todayKey)) cursor.setUTCDate(cursor.getUTCDate() - 1);
-
-  let streak = 0;
-  for (;;) {
-    const key = cursor.toISOString().slice(0, 10);
-    if (!done.has(key)) break;
-    streak++;
-    cursor.setUTCDate(cursor.getUTCDate() - 1);
-  }
-  return streak;
-}
 
 export async function listHabits(opts: {
   todayKey: string;

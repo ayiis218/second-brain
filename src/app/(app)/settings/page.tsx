@@ -3,6 +3,7 @@ import { InviteManager, type InviteRow } from "@/components/settings/invite-mana
 import { SecurityPanel, type DeviceRow } from "@/components/settings/security-panel";
 import { SignOutButton } from "@/components/settings/sign-out-button";
 import { TagManager } from "@/components/settings/tag-manager";
+import { VaultFunnelSummaryCard } from "@/components/settings/vault-funnel-summary";
 import { VaultPinSettings } from "@/components/settings/vault-pin-settings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { getSessionUser, isOwner, requireUserId } from "@/lib/auth-user";
 import { listTagsWithCount } from "@/lib/entries/repository";
 import { listInvites } from "@/lib/invites";
 import { hasVaultAccess } from "@/lib/legacy/access";
+import { listVaultFunnelSummary, type VaultFunnelSummary } from "@/lib/legacy/vault-funnel";
 import { listKnownDevices } from "@/lib/security/devices";
 import { formatDateTime } from "@/lib/time";
 
@@ -22,6 +24,11 @@ export default async function SettingsPage() {
     hasVaultAccess(),
     listTagsWithCount(),
   ]);
+
+  // Hanya owner yang boleh melihat funnel lintas-user, jadi query-nya
+  // dipanggil sesudah tahu `owner` — bukan di Promise.all di atas yang
+  // menjalankan semuanya terlepas dari perannya.
+  const vaultFunnel: VaultFunnelSummary | null = owner ? await listVaultFunnelSummary() : null;
 
   const devices: DeviceRow[] = user
     ? (await listKnownDevices(user.id)).map((d) => ({
@@ -98,6 +105,8 @@ export default async function SettingsPage() {
       <TagManager tags={tags} />
 
       {owner ? <InviteManager invites={invites} /> : null}
+
+      {vaultFunnel ? <VaultFunnelSummaryCard summary={vaultFunnel} /> : null}
 
       {/* Pemilik tidak bisa menghapus akunnya lewat aplikasi — datanya
           menaungi undangan pengguna lain. */}
