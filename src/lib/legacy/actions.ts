@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { setPin, verifyPin } from "./pin";
 import {
   createAttachment,
   createLegacyItem,
@@ -77,4 +78,42 @@ export async function deleteLegacyAttachmentAction(attachmentId: string) {
   const changed = await deleteAttachment(attachmentId);
   if (changed === 0) throw new Error("Lampiran tidak ditemukan.");
   revalidatePath("/legacy");
+}
+
+// --- PIN ------------------------------------------------------------------
+
+function readPin(formData: FormData, field: string): string {
+  const value = formData.get(field);
+  if (typeof value !== "string") throw new Error("PIN tidak valid.");
+  return value;
+}
+
+/** Setup pertama kali — dua kali ketik supaya salah ketik tidak mengunci diri sendiri. */
+export async function setupVaultPinAction(formData: FormData) {
+  const pin = readPin(formData, "pin");
+  const confirmPin = readPin(formData, "confirmPin");
+  if (pin !== confirmPin) throw new Error("PIN dan konfirmasinya tidak sama.");
+
+  await setPin(pin);
+  revalidatePath("/legacy");
+}
+
+export async function verifyVaultPinAction(formData: FormData) {
+  await verifyPin(readPin(formData, "pin"));
+  revalidatePath("/legacy");
+}
+
+/**
+ * Dipanggil dari Settings, BUKAN dari dalam /legacy — sengaja tidak minta
+ * PIN lama. Sesi Google yang sah sudah jadi bukti identitas, konsisten
+ * dengan model kepercayaan yang sudah berlaku di aplikasi ini (lihat
+ * revokeAllSessionsAction di src/lib/actions/account.ts: OAuth adalah akar
+ * kepercayaan, bukan kredensial tambahan apa pun).
+ */
+export async function resetVaultPinAction(formData: FormData) {
+  const pin = readPin(formData, "pin");
+  const confirmPin = readPin(formData, "confirmPin");
+  if (pin !== confirmPin) throw new Error("PIN dan konfirmasinya tidak sama.");
+
+  await setPin(pin);
 }

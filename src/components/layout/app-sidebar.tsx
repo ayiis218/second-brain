@@ -14,14 +14,27 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 export function AppSidebar({ nav }: { nav: NavAccess }) {
   const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
   // Daftar menu dirakit di sini, bukan diterima sebagai prop: NavItem
   // memuat komponen ikon, dan komponen tidak bisa diserialisasi dari
   // Server Component ke Client Component.
   const items = visibleNavItems(nav);
+
+  // Di mobile, sidebar adalah Sheet yang menutupi seluruh layar — menekan
+  // satu menu harus langsung menutupnya juga, bukan cuma berpindah halaman
+  // di baliknya. Next.js App Router berpindah tanpa full reload, jadi
+  // tanpa ini Sheet-nya tidak pernah tahu navigasi sudah terjadi.
+  //
+  // Dibatasi `isMobile`: di desktop sidebar-nya statis (bukan Sheet), jadi
+  // tidak boleh ada perilaku baru yang tidak diminta di sana.
+  function closeOnMobile() {
+    if (isMobile) setOpenMobile(false);
+  }
 
   return (
     <Sidebar>
@@ -41,6 +54,7 @@ export function AppSidebar({ nav }: { nav: NavAccess }) {
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     isActive={pathname === item.href}
+                    onClick={closeOnMobile}
                     render={<Link href={item.href} />}
                   >
                     <item.icon />

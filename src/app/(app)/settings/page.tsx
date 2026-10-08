@@ -3,20 +3,23 @@ import { InviteManager, type InviteRow } from "@/components/settings/invite-mana
 import { SecurityPanel, type DeviceRow } from "@/components/settings/security-panel";
 import { SignOutButton } from "@/components/settings/sign-out-button";
 import { TagManager } from "@/components/settings/tag-manager";
+import { VaultPinSettings } from "@/components/settings/vault-pin-settings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSessionUser, isOwner, requireUserId } from "@/lib/auth-user";
 import { listTagsWithCount } from "@/lib/entries/repository";
 import { listInvites } from "@/lib/invites";
+import { hasVaultAccess } from "@/lib/legacy/access";
 import { listKnownDevices } from "@/lib/security/devices";
 import { formatDateTime } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const [user, owner, tags] = await Promise.all([
+  const [user, owner, vaultAccess, tags] = await Promise.all([
     getSessionUser(),
     isOwner(),
+    hasVaultAccess(),
     listTagsWithCount(),
   ]);
 
@@ -62,6 +65,11 @@ export default async function SettingsPage() {
       </Card>
 
       <SecurityPanel devices={devices} />
+
+      {/* Entitlement vault, bukan isOwner(): pelanggan vault-only (daftar
+          lewat /vault) juga butuh mengelola PIN-nya sendiri, bukan cuma
+          pemilik aplikasi. */}
+      {vaultAccess ? <VaultPinSettings /> : null}
 
       <Card>
         <CardHeader>

@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 import { AlertTriangle, ShieldCheck } from "lucide-react";
 
 import { LegacyVault, type VaultItem } from "@/components/legacy/legacy-vault";
+import { PinGate } from "@/components/legacy/pin-gate";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { hasVaultAccess } from "@/lib/legacy/access";
 import { vaultReady } from "@/lib/legacy/crypto";
+import { hasPinSet, isUnlocked } from "@/lib/legacy/pin";
 import {
   countByCategory,
   countIncomplete,
@@ -44,6 +46,16 @@ export default async function LegacyPage() {
         </Card>
       </div>
     );
+  }
+
+  // PIN digerbang di SERVER, bukan disembunyikan di klien setelah data
+  // sudah terkirim — kalau tidak, pengecekannya cuma kosmetik. Lihat
+  // komentar panjang di lib/legacy/pin.ts untuk alasannya.
+  if (!(await hasPinSet())) {
+    return <PinGate mode="setup" />;
+  }
+  if (!(await isUnlocked())) {
+    return <PinGate mode="verify" />;
   }
 
   const [counts, incomplete] = await Promise.all([countByCategory(), countIncomplete()]);
